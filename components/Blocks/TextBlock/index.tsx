@@ -480,21 +480,29 @@ function useYJSValue(entityID: string) {
 
   useEffect(() => {
     if (!rep.rep) return;
+    let timeout: number | null = null;
     const f = async () => {
-      const update = Y.encodeStateAsUpdate(ydoc);
-      channel.send({
-        type: "broadcast",
-        event: `yjs-${entityID}`,
-        payload: { update: base64.fromByteArray(update) },
-      });
-      await rep.rep?.mutate.assertFact({
-        entity: entityID,
-        attribute: "block/text",
-        data: {
-          value: base64.fromByteArray(update),
-          type: "text",
-        },
-      });
+      async function sendUpdate() {
+        const update = Y.encodeStateAsUpdate(ydoc);
+        channel.send({
+          type: "broadcast",
+          event: `yjs-${entityID}`,
+          payload: { update: base64.fromByteArray(update) },
+        });
+        await rep.rep?.mutate.assertFact({
+          entity: entityID,
+          attribute: "block/text",
+          data: {
+            value: base64.fromByteArray(update),
+            type: "text",
+          },
+        });
+      }
+      sendUpdate();
+      if (timeout) clearTimeout(timeout);
+      timeout = window.setTimeout(() => {
+        sendUpdate();
+      }, 100);
     };
     yText.observeDeep(f);
     return () => {
