@@ -42,6 +42,7 @@ import { useHandlePaste } from "./useHandlePaste";
 import { highlightSelectionPlugin } from "./plugins";
 import { inputrules } from "./inputRules";
 import { AddTiny, MoreOptionsTiny } from "components/Icons";
+import { supabaseBrowserClient } from "supabase/browserClient";
 
 export function TextBlock(
   props: BlockProps & { className: string; preview?: boolean },
@@ -461,16 +462,31 @@ function useYJSValue(entityID: string) {
   const docStateFromReplicache = useEntity(entityID, "block/text");
   let rep = useReplicache();
   const yText = ydoc.getXmlFragment("prosemirror");
+  let supabase = supabaseBrowserClient();
+  let [channel] = useState(supabase.channel(`rootEntity:${rep.rootEntity}`));
+  useEffect(() => {
+    channel.on("broadcast", { event: `yjs-${entityID}` }, (payload) => {
+      const update = base64.toByteArray(payload.update);
+      Y.applyUpdate(ydoc, update, "remote");
+    });
+    channel.subscribe();
+    channel.unsubscribe();
+  }, [channel, ydoc, entityID]);
 
   if (docStateFromReplicache) {
     const update = base64.toByteArray(docStateFromReplicache.data.value);
-    Y.applyUpdate(ydoc, update);
+    Y.applyUpdate(ydoc, update, "remote");
   }
 
   useEffect(() => {
     if (!rep.rep) return;
     const f = async () => {
       const update = Y.encodeStateAsUpdate(ydoc);
+      channel.send({
+        type: "broadcast",
+        event: `yjs-${entityID}`,
+        payload: { update: base64.fromByteArray(update) },
+      });
       await rep.rep?.mutate.assertFact({
         entity: entityID,
         attribute: "block/text",
@@ -484,6 +500,6 @@ function useYJSValue(entityID: string) {
     return () => {
       yText.unobserveDeep(f);
     };
-  }, [yText, entityID, rep, ydoc]);
+  }, [yText, entityID, rep, ydoc, channel]);
   return [yText, docStateFromReplicache?.id] as const;
 }
