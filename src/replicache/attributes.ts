@@ -236,3 +236,10 @@ export type Data<A extends keyof typeof Attributes> = {
 export type FilterAttributes<F extends Partial<Attribute[keyof Attribute]>> = {
   [A in keyof Attribute as Attribute[A] extends F ? A : never]: Attribute[A];
 };
+
+export type Fact<A extends keyof typeof Attributes> = {
+  id: string;
+  entity: string;
+  attribute: A;
+  data: Data<A>;
+};

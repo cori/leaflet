@@ -10,17 +10,12 @@ import {
 } from "replicache";
 import { Pull } from "./pull";
 import { mutations } from "./mutations";
-import { Attributes, Data, FilterAttributes } from "./attributes";
+import { Attributes, Data, FilterAttributes, Fact } from "./attributes";
 import { Push } from "./push";
 import { clientMutationContext } from "./clientMutationContext";
 import { supabaseBrowserClient } from "supabase/browserClient";
 
-export type Fact<A extends keyof typeof Attributes> = {
-  id: string;
-  entity: string;
-  attribute: A;
-  data: Data<A>;
-};
+export type { Fact } from "./attributes";
 
 let ReplicacheContext = createContext({
   rootEntity: "" as string,

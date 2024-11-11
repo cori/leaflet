@@ -1,0 +1,16 @@
+{
+  "name": "leaflet-helpers",
+  "version": "0.0.1",
+  "description": "",
+  "main": "dist/packages/leaflet-helpers/index.js",
+  "types": "dist/packages/leaflet-helpers/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "prepublishOnly": "npm run build"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "typescript": "^5.6.3"
+  }
+}
