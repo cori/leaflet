@@ -106,22 +106,7 @@ export function DateTimeBlock(props: BlockProps) {
               className={`font-bold
               ${!permissions.write || isLocked ? "" : "group-hover/date:underline"}
               `}
-            >
-              {selectedDate.toLocaleDateString(undefined, {
-                month: "short",
-                year: "numeric",
-                day: "numeric",
-              })}{" "}
-              {!dateFact.data.dateOnly ? (
-                <span>
-                  |{" "}
-                  {selectedDate.toLocaleTimeString(undefined, {
-                    hour: "numeric",
-                    minute: "numeric",
-                  })}
-                </span>
-              ) : null}
-            </div>
+            ></div>
           ) : (
             <div
               className={`italic text-tertiary  text-left group-hover/date:underline`}
