@@ -19,9 +19,22 @@ export function DateTimeBlock(props: BlockProps) {
     () =>
       `${new Date().getHours().toString().padStart(2, "0")}:${new Date().getMinutes().toString().padStart(2, "0")}`,
   );
-  let selectedDate = useMemo(() => {
-    if (!dateFact) return new Date();
-    return new Date(dateFact.data.value);
+  let [selectedDate, dateString, timeString] = useMemo(() => {
+    if (!dateFact) return [new Date()];
+    let date = new Date(dateFact.data.value);
+    let dateString = date.toLocaleDateString(undefined, {
+      month: "short",
+      year: "numeric",
+      day: "numeric",
+    });
+    let timeString = !dateFact.data.dateOnly
+      ? date.toLocaleTimeString(undefined, {
+          hour: "numeric",
+          minute: "numeric",
+        })
+      : null;
+
+    return [date, dateString, timeString];
   }, [dateFact]);
 
   let isSelected = useUIState((s) =>
@@ -106,7 +119,10 @@ export function DateTimeBlock(props: BlockProps) {
               className={`font-bold
               ${!permissions.write || isLocked ? "" : "group-hover/date:underline"}
               `}
-            ></div>
+            >
+              {dateString}{" "}
+              {!dateFact.data.dateOnly ? <span>| {timeString}</span> : null}
+            </div>
           ) : (
             <div
               className={`italic text-tertiary  text-left group-hover/date:underline`}
