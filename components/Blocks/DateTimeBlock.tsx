@@ -19,22 +19,9 @@ export function DateTimeBlock(props: BlockProps) {
     () =>
       `${new Date().getHours().toString().padStart(2, "0")}:${new Date().getMinutes().toString().padStart(2, "0")}`,
   );
-  let [selectedDate, dateString, timeString] = useMemo(() => {
-    if (!dateFact) return [new Date()];
-    let date = new Date(dateFact.data.value);
-    let dateString = date.toLocaleDateString(undefined, {
-      month: "short",
-      year: "numeric",
-      day: "numeric",
-    });
-    let timeString = !dateFact.data.dateOnly
-      ? date.toLocaleTimeString(undefined, {
-          hour: "numeric",
-          minute: "numeric",
-        })
-      : null;
-
-    return [date, dateString, timeString];
+  let selectedDate = useMemo(() => {
+    if (!dateFact) return new Date();
+    return new Date(dateFact.data.value);
   }, [dateFact]);
 
   let isSelected = useUIState((s) =>
@@ -116,12 +103,25 @@ export function DateTimeBlock(props: BlockProps) {
           <BlockCalendarSmall className="text-tertiary" />
           {dateFact ? (
             <div
+              suppressHydrationWarning={true}
               className={`font-bold
               ${!permissions.write || isLocked ? "" : "group-hover/date:underline"}
               `}
             >
-              {dateString}{" "}
-              {!dateFact.data.dateOnly ? <span>| {timeString}</span> : null}
+              {selectedDate.toLocaleDateString(undefined, {
+                month: "short",
+                year: "numeric",
+                day: "numeric",
+              })}{" "}
+              {!dateFact.data.dateOnly ? (
+                <span suppressHydrationWarning={true}>
+                  |{" "}
+                  {selectedDate.toLocaleTimeString(undefined, {
+                    hour: "numeric",
+                    minute: "numeric",
+                  })}
+                </span>
+              ) : null}
             </div>
           ) : (
             <div
