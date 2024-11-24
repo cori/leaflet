@@ -27,6 +27,7 @@ import { useEntitySetContext } from "components/EntitySetProvider";
 import { Media } from "components/Media";
 import { useIsMobile } from "src/hooks/isMobile";
 import { DateTimeBlock } from "./DateTimeBlock";
+import { RSVPBlock } from "./RSVPBlock";
 
 export type Block = {
   factID: string;
@@ -157,6 +158,7 @@ const BlockTypeComponents: {
   embed: EmbedBlock,
   mailbox: MailboxBlock,
   datetime: DateTimeBlock,
+  rsvp: RSVPBlock,
 };
 
 export const BlockMultiselectIndicator = (props: BlockProps) => {
