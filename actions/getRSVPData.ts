@@ -11,7 +11,7 @@ import {
 import { cookies } from "next/headers";
 import { Database } from "supabase/database.types";
 
-export async function getIdentityData(entity_sets: string[]) {
+export async function getRSVPData(entity_sets: string[]) {
   const token = cookies().get("auth_token");
 
   if (!token) {
@@ -26,23 +26,22 @@ export async function getIdentityData(entity_sets: string[]) {
     .from(phone_number_auth_tokens)
     .where(eq(phone_number_auth_tokens.id, token.value));
 
-  if (!authToken || !authToken.confirmed) {
-    client.end();
-    if (authToken.confirmed) return { authToken };
-    return null;
-  }
-
   const rsvps = await db
     .select()
     .from(phone_rsvps_to_entity)
     .innerJoin(entities, eq(entities.id, phone_rsvps_to_entity.entity))
-    .where(
-      and(
-        eq(phone_rsvps_to_entity.phone_number, authToken.phone_number),
-        inArray(entities.set, entity_sets),
-      ),
-    );
+    .where(and(inArray(entities.set, entity_sets)));
 
   client.end();
-  return { authToken, rsvps };
+  return {
+    authToken,
+    rsvps: rsvps.map((rsvp) => ({
+      phone_number:
+        rsvp.phone_rsvps_to_entity.phone_number === authToken?.phone_number
+          ? authToken.phone_number
+          : null,
+      entity: rsvp.entities.id,
+      status: rsvp.phone_rsvps_to_entity.status,
+    })),
+  };
 }

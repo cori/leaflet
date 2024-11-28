@@ -9,8 +9,8 @@ import { createServerClient } from "@supabase/ssr";
 import { YJSFragmentToString } from "components/Blocks/TextBlock/RenderYJSFragment";
 import { Leaflet } from "./Leaflet";
 import { scanIndexLocal } from "src/replicache/utils";
-import { getIdentityData } from "actions/getIdentityData";
-import { IdentityProvider } from "components/IdentityProvider";
+import { getRSVPData } from "actions/getRSVPData";
+import { RSVPDataProvider } from "components/RSVPDataProvider";
 
 export const preferredRegion = ["sfo1"];
 export const dynamic = "force-dynamic";
@@ -54,19 +54,17 @@ export default async function LeafletPage(props: Props) {
     supabase.rpc("get_facts", {
       root: rootEntity,
     }),
-    getIdentityData(
-      res.data.permission_token_rights.map((ptr) => ptr.entity_set),
-    ),
+    getRSVPData(res.data.permission_token_rights.map((ptr) => ptr.entity_set)),
   ]);
   let initialFacts = (data as unknown as Fact<keyof typeof Attributes>[]) || [];
   return (
-    <IdentityProvider data={identity_data}>
+    <RSVPDataProvider data={identity_data}>
       <Leaflet
         initialFacts={initialFacts}
         leaflet_id={rootEntity}
         token={res.data}
       />
-    </IdentityProvider>
+    </RSVPDataProvider>
   );
 }
 

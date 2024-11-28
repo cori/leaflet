@@ -31,13 +31,24 @@ export async function submitRSVP(args: {
   if (!auth_token.confirmed) throw new Error("Auth token not confirmed");
 
   await db.transaction(async (tx) => {
-    await tx.insert(phone_rsvps_to_entity).values([
-      {
-        status: args.status,
-        entity: args.entity,
-        phone_number: auth_token.phone_number,
-      },
-    ]);
+    await tx
+      .insert(phone_rsvps_to_entity)
+      .values([
+        {
+          status: args.status,
+          entity: args.entity,
+          phone_number: auth_token.phone_number,
+        },
+      ])
+      .onConflictDoUpdate({
+        target: [
+          phone_rsvps_to_entity.entity,
+          phone_rsvps_to_entity.phone_number,
+        ],
+        set: {
+          status: args.status,
+        },
+      });
   });
 
   client.end();

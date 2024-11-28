@@ -1,9 +1,9 @@
 "use client";
-import { getIdentityData } from "actions/getIdentityData";
+import { getRSVPData } from "actions/getRSVPData";
 import { SWRConfig } from "swr";
 
-export function IdentityProvider(props: {
-  data: Awaited<ReturnType<typeof getIdentityData>>;
+export function RSVPDataProvider(props: {
+  data: Awaited<ReturnType<typeof getRSVPData>>;
   children: React.ReactNode;
 }) {
   return (
