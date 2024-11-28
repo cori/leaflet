@@ -2,26 +2,29 @@ import { Database } from "supabase/database.types";
 import { BlockProps, BaseBlock, ListMarker, Block } from "./Block";
 import { useState } from "react";
 import { submitRSVP } from "actions/phone_rsvp_to_event";
+import { createPhoneAuthToken } from "actions/phone_auth/request_phone_auth_token";
+import { confirmPhoneAuthToken } from "actions/phone_auth/confirm_phone_auth_token";
+import { usePhoneRSVPState } from "src/hooks/useRSVPStatus";
 
 type RSVP_Status = Database["public"]["Enums"]["rsvp_status"];
 type State =
   | {
       state: "default";
     }
-  | { state: "contact_details"; status: RSVP_Status }
-  | {
-      state: "confirm_contact";
-    };
+  | { state: "contact_details"; status: RSVP_Status };
 
 export function RSVPBlock(props: BlockProps) {
-  return (
-    <div className="flex flex-col gap-2 border p-2 w-full">
-      <RSVPForm />
-    </div>
-  );
+  let { rsvpStatus } = usePhoneRSVPState(props.entityID);
+  if (rsvpStatus === null)
+    return (
+      <div className="flex flex-col gap-2 border p-2 w-full">
+        <RSVPForm entityID={props.entityID} />
+      </div>
+    );
+  else return <div>rsvpd!!! Status={rsvpStatus?.status}</div>;
 }
 
-function RSVPForm() {
+function RSVPForm(props: { entityID: string }) {
   let [state, setState] = useState<State>({ state: "default" });
   if (state.state === "default")
     return (
@@ -56,16 +59,33 @@ function RSVPForm() {
       </>
     );
   if (state.state === "contact_details")
-    return <ContactDetailsForm status={state.status} />;
+    return (
+      <ContactDetailsForm
+        status={state.status}
+        setState={setState}
+        entityID={props.entityID}
+      />
+    );
 }
 
-function ContactDetailsForm({ status }: { status: RSVP_Status }) {
+function ContactDetailsForm({
+  status,
+  entityID,
+}: {
+  status: RSVP_Status;
+  entityID: string;
+  setState: (s: State) => void;
+}) {
+  let { mutateRSVPState } = usePhoneRSVPState(entityID);
+  let [state, setState] = useState<
+    { state: "details" } | { state: "confirm"; token: string }
+  >({ state: "details" });
   const [formState, setFormState] = useState({
     name: "",
     phone: "",
+    confirmationCode: "",
   });
-
-  return (
+  return state.state === "details" ? (
     <div className="flex flex-row gap-2">
       <input
         placeholder="name"
@@ -83,14 +103,41 @@ function ContactDetailsForm({ status }: { status: RSVP_Status }) {
       />
       <button
         onClick={async () => {
-          await submitRSVP({
-            phone_number: formState.phone,
-            entity: formState.name,
-            status: status,
-          });
+          let tokenId = await createPhoneAuthToken(formState.phone);
+          setState({ state: "confirm", token: tokenId });
         }}
       >
         submit
+      </button>
+    </div>
+  ) : (
+    <div className="flex flex-row gap-2">
+      <input
+        placeholder="confirmation code"
+        value={formState.confirmationCode || ""}
+        onChange={(e) =>
+          setFormState((state) => ({
+            ...state,
+            confirmationCode: e.target.value,
+          }))
+        }
+      />
+      <button
+        onClick={async () => {
+          let token = await confirmPhoneAuthToken(
+            state.token,
+            formState.confirmationCode,
+          );
+          if (token) {
+            await submitRSVP({
+              status,
+              entity: entityID,
+            });
+            mutateRSVPState();
+          }
+        }}
+      >
+        confirm
       </button>
     </div>
   );
