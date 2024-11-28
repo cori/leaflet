@@ -184,6 +184,39 @@ export type Database = {
           },
         ]
       }
+      permission_token_on_homepage: {
+        Row: {
+          created_at: string
+          identity: string
+          token: string
+        }
+        Insert: {
+          created_at?: string
+          identity: string
+          token: string
+        }
+        Update: {
+          created_at?: string
+          identity?: string
+          token?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "permission_token_creator_identity_fkey"
+            columns: ["identity"]
+            isOneToOne: false
+            referencedRelation: "identities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "permission_token_creator_token_fkey"
+            columns: ["token"]
+            isOneToOne: false
+            referencedRelation: "permission_tokens"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       permission_token_rights: {
         Row: {
           change_entity_set: boolean
@@ -252,6 +285,62 @@ export type Database = {
           },
         ]
       }
+      phone_number_auth_tokens: {
+        Row: {
+          confirmation_code: string
+          confirmed: boolean
+          created_at: string
+          id: string
+          phone_number: string
+        }
+        Insert: {
+          confirmation_code: string
+          confirmed?: boolean
+          created_at?: string
+          id?: string
+          phone_number: string
+        }
+        Update: {
+          confirmation_code?: string
+          confirmed?: boolean
+          created_at?: string
+          id?: string
+          phone_number?: string
+        }
+        Relationships: []
+      }
+      phone_rsvps_to_entity: {
+        Row: {
+          created_at: string
+          entity: string
+          id: string
+          phone_number: string
+          status: Database["public"]["Enums"]["rsvp_status"]
+        }
+        Insert: {
+          created_at?: string
+          entity: string
+          id?: string
+          phone_number: string
+          status: Database["public"]["Enums"]["rsvp_status"]
+        }
+        Update: {
+          created_at?: string
+          entity?: string
+          id?: string
+          phone_number?: string
+          status?: Database["public"]["Enums"]["rsvp_status"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "phone_rsvps_to_entity_entity_fkey"
+            columns: ["entity"]
+            isOneToOne: false
+            referencedRelation: "entities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       replicache_clients: {
         Row: {
           client_group: string
@@ -291,7 +380,7 @@ export type Database = {
       }
     }
     Enums: {
-      [_ in never]: never
+      rsvp_status: "GOING" | "NOT_GOING" | "MAYBE"
     }
     CompositeTypes: {
       [_ in never]: never
