@@ -4,7 +4,7 @@ import { useState } from "react";
 import { submitRSVP } from "actions/phone_rsvp_to_event";
 import { createPhoneAuthToken } from "actions/phone_auth/request_phone_auth_token";
 import { confirmPhoneAuthToken } from "actions/phone_auth/confirm_phone_auth_token";
-import { usePhoneRSVPState } from "src/hooks/useRSVPStatus";
+import { useIdentityData } from "src/hooks/useIdentity";
 
 type RSVP_Status = Database["public"]["Enums"]["rsvp_status"];
 type State =
@@ -14,14 +14,22 @@ type State =
   | { state: "contact_details"; status: RSVP_Status };
 
 export function RSVPBlock(props: BlockProps) {
-  let { rsvpStatus } = usePhoneRSVPState(props.entityID);
-  if (rsvpStatus === null)
+  let { data } = useIdentityData();
+  let rsvpStatus = data?.rsvps?.find(
+    (rsvp) => rsvp.phone_rsvps_to_entity.entity === props.entityID,
+  );
+  if (!rsvpStatus)
     return (
       <div className="flex flex-col gap-2 border p-2 w-full">
         <RSVPForm entityID={props.entityID} />
       </div>
     );
-  else return <div>rsvpd!!! Status={rsvpStatus?.status}</div>;
+  else
+    return (
+      <div>
+        You{'"'}re {rsvpStatus.phone_rsvps_to_entity.status}
+      </div>
+    );
 }
 
 function RSVPForm(props: { entityID: string }) {
@@ -76,7 +84,7 @@ function ContactDetailsForm({
   entityID: string;
   setState: (s: State) => void;
 }) {
-  let { mutateRSVPState } = usePhoneRSVPState(entityID);
+  let { mutate } = useIdentityData();
   let [state, setState] = useState<
     { state: "details" } | { state: "confirm"; token: string }
   >({ state: "details" });
@@ -133,7 +141,7 @@ function ContactDetailsForm({
               status,
               entity: entityID,
             });
-            mutateRSVPState();
+            mutate();
           }
         }}
       >
