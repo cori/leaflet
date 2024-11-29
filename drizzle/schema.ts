@@ -1,4 +1,4 @@
-import { pgTable, foreignKey, pgEnum, timestamp, text, uuid, boolean, jsonb, bigint, primaryKey } from "drizzle-orm/pg-core"
+import { pgTable, uniqueIndex, foreignKey, pgEnum, timestamp, text, uuid, boolean, jsonb, bigint, primaryKey } from "drizzle-orm/pg-core"
   import { sql } from "drizzle-orm"
 
 export const aal_level = pgEnum("aal_level", ['aal1', 'aal2', 'aal3'])
@@ -20,6 +20,12 @@ export const phone_rsvps_to_entity = pgTable("phone_rsvps_to_entity", {
 	status: rsvp_status("status").notNull(),
 	id: uuid("id").defaultRandom().primaryKey().notNull(),
 	entity: uuid("entity").notNull().references(() => entities.id, { onDelete: "cascade", onUpdate: "cascade" } ),
+	name: text("name").default('').notNull(),
+},
+(table) => {
+	return {
+		unique_phone_number_entities: uniqueIndex("unique_phone_number_entities").on(table.phone_number, table.entity),
+	}
 });
 
 export const phone_number_auth_tokens = pgTable("phone_number_auth_tokens", {

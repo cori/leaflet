@@ -6,6 +6,11 @@ import { createPhoneAuthToken } from "actions/phone_auth/request_phone_auth_toke
 import { confirmPhoneAuthToken } from "actions/phone_auth/confirm_phone_auth_token";
 import { useRSVPData } from "src/hooks/useRSVPData";
 import { useEntitySetContext } from "components/EntitySetProvider";
+import { ButtonPrimary, ButtonSecondary } from "components/Buttons";
+import { UpdateSmall } from "components/Icons";
+import { Popover } from "components/Popover";
+import { create } from "zustand";
+import { combine, createJSONStorage, persist } from "zustand/middleware";
 
 type RSVP_Status = Database["public"]["Enums"]["rsvp_status"];
 let Statuses = ["GOING", "NOT_GOING", "MAYBE"];
@@ -17,7 +22,7 @@ type State =
 
 export function RSVPBlock(props: BlockProps) {
   return (
-    <div className="flex flex-col gap-2 border p-2 w-full">
+    <div className="flex flex-col gap-2 border p-2 w-full rounded-lg border-accent-1">
       <RSVPForm entityID={props.entityID} />
     </div>
   );
@@ -28,20 +33,31 @@ function RSVPForm(props: { entityID: string }) {
   let { permissions } = useEntitySetContext();
   let { data, mutate } = useRSVPData();
   let setStatus = (status: RSVP_Status) => {
-    if (data?.authToken) {
-      submitRSVP({ entity: props.entityID, status });
-      mutate({
-        authToken: data.authToken,
-        rsvps: [
-          ...data?.rsvps.filter((r) => r.entity !== props.entityID),
-          {
-            status,
-            entity: props.entityID,
-            phone_number: data.authToken.phone_number,
-          },
-        ],
-      });
-    } else setState({ status, state: "contact_details" });
+    setState({ status, state: "contact_details" });
+  };
+  let { name } = useRSVPNameState();
+
+  let updateStatus = async (status: RSVP_Status) => {
+    if (!data?.authToken) return;
+    console.log(name);
+    await submitRSVP({
+      status,
+      name: name,
+      entity: props.entityID,
+    });
+
+    mutate({
+      authToken: data.authToken,
+      rsvps: [
+        ...(data?.rsvps || []).filter((r) => r.entity !== props.entityID),
+        {
+          name: name,
+          status,
+          entity: props.entityID,
+          phone_number: data.authToken.phone_number,
+        },
+      ],
+    });
   };
   let rsvpStatus = data?.rsvps?.find(
     (rsvp) =>
@@ -59,15 +75,26 @@ function RSVPForm(props: { entityID: string }) {
         </div>
         <hr />
         <div className="flex flex-row gap-2">
-          <div>You&apos;re {rsvpStatus}</div>|{" "}
+          {
+            {
+              GOING: `You're going!`,
+              MAYBE: "Maybe Going",
+              NOT_GOING: "You can't make it",
+            }[rsvpStatus]
+          }
+          {" | "}
           {rsvpStatus !== "GOING" && (
-            <button onClick={() => setStatus("GOING")}>Going</button>
+            <ButtonSecondary onClick={() => updateStatus("GOING")}>
+              Going
+            </ButtonSecondary>
           )}
           {rsvpStatus !== "MAYBE" && (
-            <button onClick={() => setStatus("MAYBE")}>Maybe</button>
+            <ButtonSecondary onClick={() => updateStatus("MAYBE")}>
+              Maybe
+            </ButtonSecondary>
           )}
           {rsvpStatus !== "NOT_GOING" && (
-            <button onClick={() => setStatus("NOT_GOING")}>
+            <button onClick={() => updateStatus("NOT_GOING")}>
               Can&apos;t Go
             </button>
           )}
@@ -79,8 +106,12 @@ function RSVPForm(props: { entityID: string }) {
       <>
         <div className="flex flex-row justify-between">
           <div className="flex flex-row gap-2">
-            <button onClick={() => setStatus("GOING")}>going</button>
-            <button onClick={() => setStatus("MAYBE")}>maybe</button>
+            <ButtonPrimary onClick={() => setStatus("GOING")}>
+              Going!
+            </ButtonPrimary>
+            <ButtonSecondary onClick={() => setStatus("MAYBE")}>
+              maybe
+            </ButtonSecondary>
             <button onClick={() => setStatus("NOT_GOING")}>
               can&apos;t go
             </button>
@@ -109,20 +140,66 @@ function Attendees(props: { entityID: string }) {
   let maybe = attendees.filter((rsvp) => rsvp.status === "MAYBE");
   let notGoing = attendees.filter((rsvp) => rsvp.status === "NOT_GOING");
 
+  console.log(attendees);
   return (
-    <div>
-      {going.length > 0 && `${going.length} going`}
-      {maybe.length > 0 &&
-        `${going.length > 0 ? ", " : ""}${maybe.length} maybe`}
-      {notGoing.length > 0 &&
-        `${going.length > 0 || maybe.length > 0 ? ", " : ""}${notGoing.length} can't go`}
-    </div>
+    <Popover
+      trigger={
+        <div>
+          {going.length > 0 && `${going.length} going`}
+          {maybe.length > 0 &&
+            `${going.length > 0 ? ", " : ""}${maybe.length} maybe`}
+          {notGoing.length > 0 &&
+            `${going.length > 0 || maybe.length > 0 ? ", " : ""}${notGoing.length} can't go`}
+        </div>
+      }
+    >
+      {going.length > 0 && (
+        <>
+          <div className="font-bold">Going ({going.length})</div>
+          {going.map((rsvp) => (
+            <div key={rsvp.phone_number}>{rsvp.name}</div>
+          ))}
+        </>
+      )}
+      {maybe.length > 0 && (
+        <>
+          <div className="font-bold">Maybe ({maybe.length})</div>
+          {maybe.map((rsvp) => (
+            <div key={rsvp.phone_number}>{rsvp.name}</div>
+          ))}
+        </>
+      )}
+      {notGoing.length > 0 && (
+        <>
+          <div className="font-bold">Can&apos;t Go ({notGoing.length})</div>
+          {notGoing.map((rsvp) => (
+            <div key={rsvp.phone_number}>{rsvp.name}</div>
+          ))}
+        </>
+      )}
+    </Popover>
   );
 }
 
 function SendUpdateButton() {
-  return <button>send update</button>;
+  return (
+    <ButtonPrimary>
+      <UpdateSmall /> Send an Update
+    </ButtonPrimary>
+  );
 }
+
+let useRSVPNameState = create(
+  persist(
+    combine({ name: "" }, (set) => ({
+      setName: (name: string) => set({ name }),
+    })),
+    {
+      name: "rsvp-name",
+      storage: createJSONStorage(() => localStorage),
+    },
+  ),
+);
 
 function ContactDetailsForm({
   status,
@@ -132,35 +209,61 @@ function ContactDetailsForm({
   entityID: string;
   setState: (s: State) => void;
 }) {
-  let { mutate } = useRSVPData();
+  let { data, mutate } = useRSVPData();
   let [state, setState] = useState<
     { state: "details" } | { state: "confirm"; token: string }
   >({ state: "details" });
+  let { name, setName } = useRSVPNameState();
   const [formState, setFormState] = useState({
-    name: "",
     phone: "",
     confirmationCode: "",
   });
+
+  let submit = async (
+    token: Awaited<ReturnType<typeof confirmPhoneAuthToken>>,
+  ) => {
+    await submitRSVP({
+      status,
+      name: name,
+      entity: entityID,
+    });
+
+    mutate({
+      authToken: token,
+      rsvps: [
+        ...(data?.rsvps || []).filter((r) => r.entity !== entityID),
+        {
+          name: name,
+          status,
+          entity: entityID,
+          phone_number: token.phone_number,
+        },
+      ],
+    });
+  };
   return state.state === "details" ? (
     <div className="flex flex-row gap-2">
       <input
         placeholder="name"
-        value={formState.name}
-        onChange={(e) =>
-          setFormState((state) => ({ ...state, name: e.target.value }))
-        }
+        value={name}
+        onChange={(e) => setName(e.target.value)}
       />
       <input
         placeholder="phone"
-        value={formState.phone}
+        disabled={!!data?.authToken.phone_number}
+        value={data?.authToken.phone_number || formState.phone}
         onChange={(e) =>
           setFormState((state) => ({ ...state, phone: e.target.value }))
         }
       />
       <button
         onClick={async () => {
-          let tokenId = await createPhoneAuthToken(formState.phone);
-          setState({ state: "confirm", token: tokenId });
+          if (data?.authToken) {
+            submit(data.authToken);
+          } else {
+            let tokenId = await createPhoneAuthToken(formState.phone);
+            setState({ state: "confirm", token: tokenId });
+          }
         }}
       >
         submit
@@ -184,13 +287,7 @@ function ContactDetailsForm({
             state.token,
             formState.confirmationCode,
           );
-          if (token) {
-            await submitRSVP({
-              status,
-              entity: entityID,
-            });
-            mutate();
-          }
+          submit(token);
         }}
       >
         confirm

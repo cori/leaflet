@@ -17,6 +17,7 @@ import { cookies } from "next/headers";
 export async function submitRSVP(args: {
   entity: string;
   status: Database["public"]["Enums"]["rsvp_status"];
+  name: string;
 }) {
   const client = postgres(process.env.DB_URL as string, { idle_timeout: 5 });
   const db = drizzle(client);
@@ -38,6 +39,7 @@ export async function submitRSVP(args: {
           status: args.status,
           entity: args.entity,
           phone_number: auth_token.phone_number,
+          name: args.name,
         },
       ])
       .onConflictDoUpdate({
@@ -46,6 +48,7 @@ export async function submitRSVP(args: {
           phone_rsvps_to_entity.phone_number,
         ],
         set: {
+          name: args.name,
           status: args.status,
         },
       });

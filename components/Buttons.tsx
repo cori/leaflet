@@ -32,6 +32,32 @@ export function ButtonPrimary(
   );
 }
 
+export function ButtonSecondary(
+  props: {
+    fullWidth?: boolean;
+    children: React.ReactNode;
+    compact?: boolean;
+  } & ButtonProps,
+) {
+  return (
+    <button
+      {...props}
+      className={`m-0 h-max ${props.fullWidth ? "w-full" : "w-max"}  ${props.compact ? "py-0 px-1" : "px-2 py-0.5 "}
+  bg-bg-page outline-transparent
+  rounded-md text-base font-bold text-accent-1
+  flex gap-2 items-center justify-center shrink-0
+  transparent-outline hover:outline-accent-1 outline-offset-1
+  border-accent-1
+  border
+  disabled:bg-border-light disabled:text-border disabled:hover:text-border
+  ${props.className}
+`}
+    >
+      {props.children}
+    </button>
+  );
+}
+
 export const HoverButton = (props: {
   id?: string;
   icon: React.ReactNode;

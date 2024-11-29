@@ -36,6 +36,7 @@ export async function getRSVPData(entity_sets: string[]) {
   return {
     authToken,
     rsvps: rsvps.map((rsvp) => ({
+      name: rsvp.phone_rsvps_to_entity.name,
       phone_number:
         rsvp.phone_rsvps_to_entity.phone_number === authToken?.phone_number
           ? authToken.phone_number
