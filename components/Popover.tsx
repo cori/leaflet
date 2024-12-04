@@ -15,7 +15,7 @@ export const Popover = (props: {
 }) => {
   return (
     <RadixPopover.Root open={props.open}>
-      <RadixPopover.Trigger disabled={props.disabled}>
+      <RadixPopover.Trigger disabled={props.disabled} className="w-max">
         {props.trigger}
       </RadixPopover.Trigger>
       <RadixPopover.Portal>

@@ -19,7 +19,7 @@ export function ButtonPrimary(
     <button
       {...props}
       className={`m-0 h-max ${props.fullWidth ? "w-full" : "w-max"}  ${props.compact ? "py-0 px-1" : "px-2 py-0.5 "}
-  bg-accent-1  outline-transparent
+  bg-accent-1  outline-transparent border border-accent-1
   rounded-md text-base font-bold text-accent-2
   flex gap-2 items-center justify-center shrink-0
   transparent-outline hover:outline-accent-1 outline-offset-1
@@ -47,9 +47,30 @@ export function ButtonSecondary(
   rounded-md text-base font-bold text-accent-1
   flex gap-2 items-center justify-center shrink-0
   transparent-outline hover:outline-accent-1 outline-offset-1
-  border-accent-1
-  border
+  border border-accent-1
   disabled:bg-border-light disabled:text-border disabled:hover:text-border
+  ${props.className}
+`}
+    >
+      {props.children}
+    </button>
+  );
+}
+
+export function ButtonTertiary(
+  props: {
+    fullWidth?: boolean;
+    children: React.ReactNode;
+    compact?: boolean;
+  } & ButtonProps,
+) {
+  return (
+    <button
+      {...props}
+      className={`m-0 h-max ${props.fullWidth ? "w-full" : "w-max"}  ${props.compact ? "px-0" : "px-1"}
+  bg-transparent text-base font-bold text-accent-contrast
+  flex gap-2 items-center justify-center shrink-0
+  hover:underline disabled:text-border
   ${props.className}
 `}
     >

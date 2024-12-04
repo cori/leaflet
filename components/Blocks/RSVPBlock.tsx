@@ -6,11 +6,17 @@ import { createPhoneAuthToken } from "actions/phone_auth/request_phone_auth_toke
 import { confirmPhoneAuthToken } from "actions/phone_auth/confirm_phone_auth_token";
 import { useRSVPData } from "src/hooks/useRSVPData";
 import { useEntitySetContext } from "components/EntitySetProvider";
-import { ButtonPrimary, ButtonSecondary } from "components/Buttons";
+import {
+  ButtonPrimary,
+  ButtonSecondary,
+  ButtonTertiary,
+} from "components/Buttons";
 import { UpdateSmall } from "components/Icons";
 import { Popover } from "components/Popover";
 import { create } from "zustand";
 import { combine, createJSONStorage, persist } from "zustand/middleware";
+import { useUIState } from "src/useUIState";
+import { Separator } from "components/Layout";
 
 type RSVP_Status = Database["public"]["Enums"]["rsvp_status"];
 let Statuses = ["GOING", "NOT_GOING", "MAYBE"];
@@ -21,8 +27,17 @@ type State =
   | { state: "contact_details"; status: RSVP_Status };
 
 export function RSVPBlock(props: BlockProps) {
+  let isSelected = useUIState((s) =>
+    s.selectedBlocks.find((b) => b.value === props.entityID),
+  );
   return (
-    <div className="flex flex-col gap-2 border p-2 w-full rounded-lg border-accent-1">
+    <div
+      className={`rsvp flex flex-col gap-2 border bg-test p-3 w-full rounded-lg ${isSelected ? "block-border-selected " : "block-border"}`}
+      style={{
+        backgroundColor:
+          "color-mix(in oklab, rgb(var(--accent-contrast)), rgb(var(--bg-page)) 85%)",
+      }}
+    >
       <RSVPForm entityID={props.entityID} />
     </div>
   );
@@ -36,6 +51,95 @@ function RSVPForm(props: { entityID: string }) {
     setState({ status, state: "contact_details" });
   };
   let { name } = useRSVPNameState();
+
+  let rsvpStatus = data?.rsvps?.find(
+    (rsvp) =>
+      data.authToken &&
+      rsvp.entity === props.entityID &&
+      data.authToken.phone_number === rsvp.phone_number,
+  )?.status;
+
+  // IF YOU HAVE ALREADY RSVP'D
+  if (rsvpStatus)
+    return permissions.write ? (
+      //AND YOU'RE A HOST
+      <>
+        <div className="flex flex-row justify-between items-center">
+          <Attendees entityID={props.entityID} className="font-bold" />
+          <SendUpdateButton />
+        </div>
+        <hr className="border-border w-full" />
+        <YourRSVPStatus entityID={props.entityID} compact />
+      </>
+    ) : (
+      // AND YOU'RE A GUEST
+      <div className="flex flex-row justify-between items-center">
+        <YourRSVPStatus entityID={props.entityID} />
+        <Attendees entityID={props.entityID} className="font-normal text-sm" />
+      </div>
+    );
+
+  // IF YOU HAVEN'T RSVP'D
+  if (state.state === "default")
+    return permissions.write ? (
+      //YOU'RE A HOST
+      <>
+        <div className="flex flex-row justify-between">
+          <div className="flex flex-row gap-2 items-center">
+            <ButtonPrimary onClick={() => setStatus("GOING")}>
+              Going!
+            </ButtonPrimary>
+            <ButtonSecondary onClick={() => setStatus("MAYBE")}>
+              Maybe
+            </ButtonSecondary>
+            <ButtonTertiary onClick={() => setStatus("NOT_GOING")}>
+              Can&apos;t Go
+            </ButtonTertiary>
+          </div>
+          <SendUpdateButton />
+        </div>
+        <hr className="border-border" />
+        <Attendees entityID={props.entityID} className="text-sm" />
+      </>
+    ) : (
+      //YOU'RE A GUEST
+      <div className="flex flex-row justify-between">
+        <div className="flex flex-row gap-2 items-center">
+          <ButtonPrimary onClick={() => setStatus("GOING")}>
+            Going!
+          </ButtonPrimary>
+          <ButtonSecondary onClick={() => setStatus("MAYBE")}>
+            Maybe
+          </ButtonSecondary>
+          <ButtonTertiary onClick={() => setStatus("NOT_GOING")}>
+            Can&apos;t Go
+          </ButtonTertiary>
+        </div>
+        <Attendees entityID={props.entityID} className="text-sm" />
+      </div>
+    );
+
+  // IF YOU ARE CURRENTLY CONFIRMING YOUR CONTACT DETAILS
+  if (state.state === "contact_details")
+    return (
+      <ContactDetailsForm
+        status={state.status}
+        setState={setState}
+        entityID={props.entityID}
+      />
+    );
+}
+
+function YourRSVPStatus(props: { entityID: string; compact?: boolean }) {
+  let { data, mutate } = useRSVPData();
+  let { name } = useRSVPNameState();
+
+  let rsvpStatus = data?.rsvps?.find(
+    (rsvp) =>
+      data.authToken &&
+      rsvp.entity === props.entityID &&
+      data.authToken.phone_number === rsvp.phone_number,
+  )?.status;
 
   let updateStatus = async (status: RSVP_Status) => {
     if (!data?.authToken) return;
@@ -59,80 +163,48 @@ function RSVPForm(props: { entityID: string }) {
       ],
     });
   };
-  let rsvpStatus = data?.rsvps?.find(
-    (rsvp) =>
-      data.authToken &&
-      rsvp.entity === props.entityID &&
-      data.authToken.phone_number === rsvp.phone_number,
-  )?.status;
-
-  if (rsvpStatus)
-    return (
-      <>
-        <div className="flex flex-row justify-between">
-          <Attendees entityID={props.entityID} />
-          <SendUpdateButton />
-        </div>
-        <hr />
-        <div className="flex flex-row gap-2">
-          {
-            {
-              GOING: `You're going!`,
-              MAYBE: "Maybe Going",
-              NOT_GOING: "You can't make it",
-            }[rsvpStatus]
-          }
-          {" | "}
-          {rsvpStatus !== "GOING" && (
-            <ButtonSecondary onClick={() => updateStatus("GOING")}>
-              Going
-            </ButtonSecondary>
-          )}
-          {rsvpStatus !== "MAYBE" && (
-            <ButtonSecondary onClick={() => updateStatus("MAYBE")}>
-              Maybe
-            </ButtonSecondary>
-          )}
-          {rsvpStatus !== "NOT_GOING" && (
-            <button onClick={() => updateStatus("NOT_GOING")}>
-              Can&apos;t Go
-            </button>
-          )}
-        </div>
-      </>
-    );
-  if (state.state === "default")
-    return (
-      <>
-        <div className="flex flex-row justify-between">
-          <div className="flex flex-row gap-2">
-            <ButtonPrimary onClick={() => setStatus("GOING")}>
-              Going!
-            </ButtonPrimary>
-            <ButtonSecondary onClick={() => setStatus("MAYBE")}>
-              maybe
-            </ButtonSecondary>
-            <button onClick={() => setStatus("NOT_GOING")}>
-              can&apos;t go
-            </button>
-          </div>
-          <SendUpdateButton />
-        </div>
-        <hr />
-        <Attendees entityID={props.entityID} />
-      </>
-    );
-  if (state.state === "contact_details")
-    return (
-      <ContactDetailsForm
-        status={state.status}
-        setState={setState}
-        entityID={props.entityID}
-      />
-    );
+  return (
+    <div
+      className={`flex flex-row gap-2 font-bold items-center ${props.compact ? "text-sm" : ""}`}
+    >
+      {rsvpStatus !== undefined &&
+        {
+          GOING: `You're Going!`,
+          MAYBE: "You're a Maybe",
+          NOT_GOING: "Can't Make It",
+        }[rsvpStatus]}
+      <Separator classname="mx-1 h-6" />
+      {rsvpStatus !== "GOING" && (
+        <ButtonPrimary
+          className={props.compact ? "text-sm" : ""}
+          compact={props.compact}
+          onClick={() => updateStatus("GOING")}
+        >
+          Going
+        </ButtonPrimary>
+      )}
+      {rsvpStatus !== "MAYBE" && (
+        <ButtonSecondary
+          className={props.compact ? "text-sm" : ""}
+          compact={props.compact}
+          onClick={() => updateStatus("MAYBE")}
+        >
+          Maybe
+        </ButtonSecondary>
+      )}
+      {rsvpStatus !== "NOT_GOING" && (
+        <ButtonTertiary
+          className={props.compact ? "text-sm" : ""}
+          onClick={() => updateStatus("NOT_GOING")}
+        >
+          Can&apos;t Go
+        </ButtonTertiary>
+      )}
+    </div>
+  );
 }
 
-function Attendees(props: { entityID: string }) {
+function Attendees(props: { entityID: string; className?: string }) {
   let { data, mutate } = useRSVPData();
   let attendees =
     data?.rsvps.filter((rsvp) => rsvp.entity === props.entityID) || [];
@@ -143,45 +215,62 @@ function Attendees(props: { entityID: string }) {
   console.log(attendees);
   return (
     <Popover
+      align="start"
+      className="text-sm text-secondary flex flex-col gap-2 max-w-sm"
       trigger={
-        <div>
-          {going.length > 0 && `${going.length} going`}
-          {maybe.length > 0 &&
-            `${going.length > 0 ? ", " : ""}${maybe.length} maybe`}
-          {notGoing.length > 0 &&
-            `${going.length > 0 || maybe.length > 0 ? ", " : ""}${notGoing.length} can't go`}
-        </div>
+        going.length === 0 && maybe.length === 0 ? (
+          <div
+            className={`w-max text-tertiary italic hover:underline ${props.className}`}
+          >
+            No RSVPs yet
+          </div>
+        ) : (
+          <div
+            className={` font-bold hover:underline w-max text-accent-1 !text-left place-self-start ${props.className}`}
+          >
+            {going.length > 0 && `${going.length} Going`}
+            {maybe.length > 0 &&
+              `${going.length > 0 ? ", " : ""}${maybe.length} Maybe`}
+          </div>
+        )
       }
     >
+      {going.length === 0 && maybe.length === 0 && notGoing.length === 0 && (
+        <div className="text-tertiary italic">No RSVPs yet</div>
+      )}
       {going.length > 0 && (
-        <>
-          <div className="font-bold">Going ({going.length})</div>
+        <div className="flex flex-col gap-0.5">
+          <div className="font-bold text-tertiary">Going ({going.length})</div>
           {going.map((rsvp) => (
             <div key={rsvp.phone_number}>{rsvp.name}</div>
           ))}
-        </>
+        </div>
       )}
       {maybe.length > 0 && (
-        <>
-          <div className="font-bold">Maybe ({maybe.length})</div>
+        <div className="flex flex-col gap-0">
+          <div className="font-bold text-tertiary">Maybe ({maybe.length})</div>
           {maybe.map((rsvp) => (
             <div key={rsvp.phone_number}>{rsvp.name}</div>
           ))}
-        </>
+        </div>
       )}
       {notGoing.length > 0 && (
-        <>
-          <div className="font-bold">Can&apos;t Go ({notGoing.length})</div>
+        <div className="flex flex-col gap-0">
+          <div className="font-bold text-tertiary">
+            Can&apos;t Go ({notGoing.length})
+          </div>
           {notGoing.map((rsvp) => (
             <div key={rsvp.phone_number}>{rsvp.name}</div>
           ))}
-        </>
+        </div>
       )}
     </Popover>
   );
 }
 
 function SendUpdateButton() {
+  let { permissions } = useEntitySetContext();
+  if (!!!permissions.write) return;
   return (
     <ButtonPrimary>
       <UpdateSmall /> Send an Update
@@ -242,21 +331,33 @@ function ContactDetailsForm({
     });
   };
   return state.state === "details" ? (
-    <div className="flex flex-row gap-2">
-      <input
-        placeholder="name"
-        value={name}
-        onChange={(e) => setName(e.target.value)}
-      />
-      <input
-        placeholder="phone"
-        disabled={!!data?.authToken.phone_number}
-        value={data?.authToken.phone_number || formState.phone}
-        onChange={(e) =>
-          setFormState((state) => ({ ...state, phone: e.target.value }))
-        }
-      />
-      <button
+    <div className="flex flex-row gap-2 w-fit place-self-center">
+      <div className="relative">
+        <label className="absolute top-0.5 left-[6px] text-xs font-bold italic text-tertiary">
+          name
+        </label>
+        <input
+          placeholder="..."
+          className="input-with-border !pt-4"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+        />
+      </div>
+      <div className="relative">
+        <label className="absolute top-0.5 left-[6px] text-xs font-bold italic text-tertiary">
+          phone number
+        </label>
+        <input
+          placeholder="0000000000"
+          className="input-with-border !pt-4"
+          disabled={!!data?.authToken.phone_number}
+          value={data?.authToken.phone_number || formState.phone}
+          onChange={(e) =>
+            setFormState((state) => ({ ...state, phone: e.target.value }))
+          }
+        />
+      </div>
+      <ButtonPrimary
         onClick={async () => {
           if (data?.authToken) {
             submit(data.authToken);
@@ -266,8 +367,8 @@ function ContactDetailsForm({
           }
         }}
       >
-        submit
-      </button>
+        RSVP
+      </ButtonPrimary>
     </div>
   ) : (
     <div className="flex flex-row gap-2">
