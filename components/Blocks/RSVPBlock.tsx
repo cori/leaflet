@@ -11,7 +11,7 @@ import {
   ButtonSecondary,
   ButtonTertiary,
 } from "components/Buttons";
-import { UpdateSmall } from "components/Icons";
+import { InfoSmall, UpdateSmall } from "components/Icons";
 import { Popover } from "components/Popover";
 import { create } from "zustand";
 import { combine, createJSONStorage, persist } from "zustand/middleware";
@@ -32,7 +32,7 @@ export function RSVPBlock(props: BlockProps) {
   );
   return (
     <div
-      className={`rsvp flex flex-col gap-2 border bg-test p-3 w-full rounded-lg ${isSelected ? "block-border-selected " : "block-border"}`}
+      className={`rsvp flex flex-col sm:gap-2 border bg-test p-3 w-full rounded-lg ${isSelected ? "block-border-selected " : "block-border"}`}
       style={{
         backgroundColor:
           "color-mix(in oklab, rgb(var(--accent-contrast)), rgb(var(--bg-page)) 85%)",
@@ -64,17 +64,20 @@ function RSVPForm(props: { entityID: string }) {
     return permissions.write ? (
       //AND YOU'RE A HOST
       <>
-        <div className="flex flex-row justify-between items-center">
+        <div className="flex sm:flex-row flex-col-reverse sm:gap-0 gap-2 justify-between items-start sm:items-center">
           <Attendees entityID={props.entityID} className="font-bold" />
+          <hr className="block border-border sm:hidden w-full my-1" />
+
           <SendUpdateButton />
         </div>
-        <hr className="border-border w-full" />
+        <hr className="border-border w-full hidden sm:block" />
         <YourRSVPStatus entityID={props.entityID} compact />
       </>
     ) : (
       // AND YOU'RE A GUEST
-      <div className="flex flex-row justify-between items-center">
+      <div className="flex sm:flex-row flex-col justify-between items-start sm:items-center">
         <YourRSVPStatus entityID={props.entityID} />
+        <hr className="block border-border sm:hidden w-full my-2" />
         <Attendees entityID={props.entityID} className="font-normal text-sm" />
       </div>
     );
@@ -84,7 +87,7 @@ function RSVPForm(props: { entityID: string }) {
     return permissions.write ? (
       //YOU'RE A HOST
       <>
-        <div className="flex flex-row justify-between">
+        <div className="flex sm:flex-row flex-col-reverse sm:gap-0 gap-2 justify-between">
           <div className="flex flex-row gap-2 items-center">
             <ButtonPrimary onClick={() => setStatus("GOING")}>
               Going!
@@ -96,14 +99,16 @@ function RSVPForm(props: { entityID: string }) {
               Can&apos;t Go
             </ButtonTertiary>
           </div>
+          <hr className="block border-border sm:hidden w-full my-1" />
+
           <SendUpdateButton />
         </div>
-        <hr className="border-border" />
-        <Attendees entityID={props.entityID} className="text-sm" />
+        <hr className="border-border sm:block hidden" />
+        <Attendees entityID={props.entityID} className="text-sm sm:pt-0 pt-2" />
       </>
     ) : (
       //YOU'RE A GUEST
-      <div className="flex flex-row justify-between">
+      <div className="flex sm:flex-row flex-col justify-between">
         <div className="flex flex-row gap-2 items-center">
           <ButtonPrimary onClick={() => setStatus("GOING")}>
             Going!
@@ -115,6 +120,8 @@ function RSVPForm(props: { entityID: string }) {
             Can&apos;t Go
           </ButtonTertiary>
         </div>
+        <hr className="block border-border sm:hidden w-full my-2" />
+
         <Attendees entityID={props.entityID} className="text-sm" />
       </div>
     );
@@ -165,7 +172,7 @@ function YourRSVPStatus(props: { entityID: string; compact?: boolean }) {
   };
   return (
     <div
-      className={`flex flex-row gap-2 font-bold items-center ${props.compact ? "text-sm" : ""}`}
+      className={`flex flex-row gap-1 sm:gap-2 font-bold items-center ${props.compact ? "text-sm sm:font-bold font-normal" : ""}`}
     >
       {rsvpStatus !== undefined &&
         {
@@ -176,7 +183,7 @@ function YourRSVPStatus(props: { entityID: string; compact?: boolean }) {
       <Separator classname="mx-1 h-6" />
       {rsvpStatus !== "GOING" && (
         <ButtonPrimary
-          className={props.compact ? "text-sm" : ""}
+          className={props.compact ? "text-sm  !font-normal" : ""}
           compact={props.compact}
           onClick={() => updateStatus("GOING")}
         >
@@ -185,7 +192,7 @@ function YourRSVPStatus(props: { entityID: string; compact?: boolean }) {
       )}
       {rsvpStatus !== "MAYBE" && (
         <ButtonSecondary
-          className={props.compact ? "text-sm" : ""}
+          className={props.compact ? "text-sm  !font-normal" : ""}
           compact={props.compact}
           onClick={() => updateStatus("MAYBE")}
         >
@@ -194,7 +201,7 @@ function YourRSVPStatus(props: { entityID: string; compact?: boolean }) {
       )}
       {rsvpStatus !== "NOT_GOING" && (
         <ButtonTertiary
-          className={props.compact ? "text-sm" : ""}
+          className={props.compact ? "text-sm  !font-normal" : ""}
           onClick={() => updateStatus("NOT_GOING")}
         >
           Can&apos;t Go
@@ -226,7 +233,7 @@ function Attendees(props: { entityID: string; className?: string }) {
           </div>
         ) : (
           <div
-            className={` font-bold hover:underline w-max text-accent-1 !text-left place-self-start ${props.className}`}
+            className={` font-bold hover:underline w-max text-accent-contrast !text-left place-self-start ${props.className}`}
           >
             {going.length > 0 && `${going.length} Going`}
             {maybe.length > 0 &&
@@ -272,7 +279,7 @@ function SendUpdateButton() {
   let { permissions } = useEntitySetContext();
   if (!!!permissions.write) return;
   return (
-    <ButtonPrimary>
+    <ButtonPrimary fullWidthOnMobile>
       <UpdateSmall /> Send an Update
     </ButtonPrimary>
   );
@@ -331,44 +338,67 @@ function ContactDetailsForm({
     });
   };
   return state.state === "details" ? (
-    <div className="flex flex-row gap-2 w-fit place-self-center">
-      <div className="relative">
-        <label className="absolute top-0.5 left-[6px] text-xs font-bold italic text-tertiary">
-          name
-        </label>
-        <input
-          placeholder="..."
-          className="input-with-border !pt-4"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-        />
+    <div className="rsvpForm flex flex-col gap-2">
+      <div className="rsvpInputs flex sm:flex-row flex-col gap-2 w-fit place-self-center ">
+        <div className="rsvpNameInput relative w-full basis-1/3">
+          <label className="absolute top-0.5 left-[6px] text-xs font-bold italic text-tertiary">
+            name
+          </label>
+          <input
+            placeholder="..."
+            className="input-with-border !pt-5 w-full "
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+          />
+        </div>
+        <div
+          className={`rsvpPhoneInputWrapper  relative flex flex-col gap-0.5 w-full basis-2/3`}
+        >
+          <div
+            className={`rsvpPhoneInput input-with-border flex flex-col  ${!!data?.authToken.phone_number && "bg-border-light border-border-light text-tertiary"}`}
+          >
+            <label className=" text-xs font-bold italic text-tertiary">
+              phone number
+            </label>
+            <div className="flex gap-2 ">
+              <div className="w-max shrink-0">🇺🇸 +1</div>
+              <Separator />
+
+              <input
+                placeholder="0000000000"
+                className="bg-transparent disabled:text-tertiary w-full"
+                disabled={!!data?.authToken.phone_number}
+                value={data?.authToken.phone_number || formState.phone}
+                onChange={(e) =>
+                  setFormState((state) => ({ ...state, phone: e.target.value }))
+                }
+              />
+            </div>
+          </div>
+          <div className="text-xs italic text-tertiary leading-tight">
+            Non-US numbers will receive messages through{" "}
+            <strong>WhatsApp</strong>
+          </div>
+        </div>
       </div>
-      <div className="relative">
-        <label className="absolute top-0.5 left-[6px] text-xs font-bold italic text-tertiary">
-          phone number
-        </label>
-        <input
-          placeholder="0000000000"
-          className="input-with-border !pt-4"
-          disabled={!!data?.authToken.phone_number}
-          value={data?.authToken.phone_number || formState.phone}
-          onChange={(e) =>
-            setFormState((state) => ({ ...state, phone: e.target.value }))
-          }
-        />
+
+      <hr className="border-border" />
+      <div className="flex flex-row gap-2 w-full items-center justify-end">
+        <ConsentPopover />
+        <ButtonPrimary
+          className="place-self-end"
+          onClick={async () => {
+            if (data?.authToken) {
+              submit(data.authToken);
+            } else {
+              let tokenId = await createPhoneAuthToken(formState.phone);
+              setState({ state: "confirm", token: tokenId });
+            }
+          }}
+        >
+          RSVP
+        </ButtonPrimary>
       </div>
-      <ButtonPrimary
-        onClick={async () => {
-          if (data?.authToken) {
-            submit(data.authToken);
-          } else {
-            let tokenId = await createPhoneAuthToken(formState.phone);
-            setState({ state: "confirm", token: tokenId });
-          }
-        }}
-      >
-        RSVP
-      </ButtonPrimary>
     </div>
   ) : (
     <div className="flex flex-row gap-2">
@@ -396,3 +426,15 @@ function ContactDetailsForm({
     </div>
   );
 }
+
+const ConsentPopover = () => {
+  return (
+    <Popover
+      className="max-w-xs text-sm"
+      trigger={<InfoSmall className="text-accent-contrast" />}
+    >
+      Clicking this button means that you are consenting to receive SMS messages
+      from us!
+    </Popover>
+  );
+};

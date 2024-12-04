@@ -11,6 +11,7 @@ type ButtonProps = Omit<JSX.IntrinsicElements["button"], "content">;
 export function ButtonPrimary(
   props: {
     fullWidth?: boolean;
+    fullWidthOnMobile?: boolean;
     children: React.ReactNode;
     compact?: boolean;
   } & ButtonProps,
@@ -18,7 +19,10 @@ export function ButtonPrimary(
   return (
     <button
       {...props}
-      className={`m-0 h-max ${props.fullWidth ? "w-full" : "w-max"}  ${props.compact ? "py-0 px-1" : "px-2 py-0.5 "}
+      className={`
+        m-0 h-max
+        ${props.fullWidth ? "w-full" : props.fullWidthOnMobile ? " sm:w-max w-full" : "w-max"}
+        ${props.compact ? "py-0 px-1" : "px-2 py-0.5 "}
   bg-accent-1  outline-transparent border border-accent-1
   rounded-md text-base font-bold text-accent-2
   flex gap-2 items-center justify-center shrink-0
@@ -44,10 +48,10 @@ export function ButtonSecondary(
       {...props}
       className={`m-0 h-max ${props.fullWidth ? "w-full" : "w-max"}  ${props.compact ? "py-0 px-1" : "px-2 py-0.5 "}
   bg-bg-page outline-transparent
-  rounded-md text-base font-bold text-accent-1
+  rounded-md text-base font-bold text-accent-contrast
   flex gap-2 items-center justify-center shrink-0
-  transparent-outline hover:outline-accent-1 outline-offset-1
-  border border-accent-1
+  transparent-outline hover:outline-accent-contrast outline-offset-1
+  border border-accent-contrast
   disabled:bg-border-light disabled:text-border disabled:hover:text-border
   ${props.className}
 `}
