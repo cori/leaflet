@@ -12,6 +12,7 @@ import {
   LinkSmall,
   BlockEmbedSmall,
   BlockCalendarSmall,
+  RSVPSmall,
 } from "components/Icons";
 import { generateKeyBetween } from "fractional-indexing";
 import { focusPage } from "components/Pages";
@@ -199,14 +200,14 @@ export const blockCommands: Command[] = [
 
   {
     name: "RSVP",
-    icon: <BlockCalendarSmall />,
-    type: "block",
+    icon: <RSVPSmall />,
+    type: "event",
     onSelect: (rep, props) => createBlockWithType(rep, props, "rsvp"),
   },
   {
     name: "Date and Time",
     icon: <BlockCalendarSmall />,
-    type: "block",
+    type: "event",
     onSelect: (rep, props) => createBlockWithType(rep, props, "datetime"),
   },
 
