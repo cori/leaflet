@@ -1,4 +1,4 @@
-import React from "react";
+import React, { forwardRef } from "react";
 import * as RadixTooltip from "@radix-ui/react-tooltip";
 import { theme } from "tailwind.config";
 import { PopoverArrow } from "./Icons";
@@ -8,17 +8,19 @@ import {
 } from "./ThemeManager/ThemeProvider";
 
 type ButtonProps = Omit<JSX.IntrinsicElements["button"], "content">;
-export function ButtonPrimary(
-  props: {
+export const ButtonPrimary = forwardRef<
+  HTMLButtonElement,
+  ButtonProps & {
     fullWidth?: boolean;
     fullWidthOnMobile?: boolean;
     children: React.ReactNode;
     compact?: boolean;
-  } & ButtonProps,
-) {
+  }
+>((props, ref) => {
   return (
     <button
       {...props}
+      ref={ref}
       className={`
         m-0 h-max
         ${props.fullWidth ? "w-full" : props.fullWidthOnMobile ? " sm:w-max w-full" : "w-max"}
@@ -34,18 +36,21 @@ export function ButtonPrimary(
       {props.children}
     </button>
   );
-}
+});
+ButtonPrimary.displayName = "ButtonPrimary";
 
-export function ButtonSecondary(
-  props: {
+export const ButtonSecondary = forwardRef<
+  HTMLButtonElement,
+  {
     fullWidth?: boolean;
     children: React.ReactNode;
     compact?: boolean;
-  } & ButtonProps,
-) {
+  } & ButtonProps
+>((props, ref) => {
   return (
     <button
       {...props}
+      ref={ref}
       className={`m-0 h-max ${props.fullWidth ? "w-full" : "w-max"}  ${props.compact ? "py-0 px-1" : "px-2 py-0.5 "}
   bg-bg-page outline-transparent
   rounded-md text-base font-bold text-accent-contrast
@@ -59,18 +64,21 @@ export function ButtonSecondary(
       {props.children}
     </button>
   );
-}
+});
+ButtonSecondary.displayName = "ButtonSecondary";
 
-export function ButtonTertiary(
-  props: {
+export const ButtonTertiary = forwardRef<
+  HTMLButtonElement,
+  {
     fullWidth?: boolean;
     children: React.ReactNode;
     compact?: boolean;
-  } & ButtonProps,
-) {
+  } & ButtonProps
+>((props, ref) => {
   return (
     <button
       {...props}
+      ref={ref}
       className={`m-0 h-max ${props.fullWidth ? "w-full" : "w-max"}  ${props.compact ? "px-0" : "px-1"}
   bg-transparent text-base font-bold text-accent-contrast
   flex gap-2 items-center justify-center shrink-0
@@ -81,7 +89,8 @@ export function ButtonTertiary(
       {props.children}
     </button>
   );
-}
+});
+ButtonTertiary.displayName = "ButtonTertiary";
 
 export const HoverButton = (props: {
   id?: string;

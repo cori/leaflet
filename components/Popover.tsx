@@ -12,10 +12,15 @@ export const Popover = (props: {
   border?: string;
   className?: string;
   open?: boolean;
+  asChild?: boolean;
 }) => {
   return (
     <RadixPopover.Root open={props.open}>
-      <RadixPopover.Trigger disabled={props.disabled} className="w-max">
+      <RadixPopover.Trigger
+        disabled={props.disabled}
+        className="w-max"
+        asChild={props.asChild}
+      >
         {props.trigger}
       </RadixPopover.Trigger>
       <RadixPopover.Portal>

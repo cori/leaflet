@@ -224,21 +224,20 @@ function Attendees(props: { entityID: string; className?: string }) {
     <Popover
       align="start"
       className="text-sm text-secondary flex flex-col gap-2 max-w-sm"
+      asChild
       trigger={
         going.length === 0 && maybe.length === 0 ? (
-          <div
+          <button
             className={`w-max text-tertiary italic hover:underline ${props.className}`}
           >
             No RSVPs yet
-          </div>
+          </button>
         ) : (
-          <div
-            className={` font-bold hover:underline w-max text-accent-contrast !text-left place-self-start ${props.className}`}
-          >
+          <ButtonTertiary className={props.className}>
             {going.length > 0 && `${going.length} Going`}
             {maybe.length > 0 &&
               `${going.length > 0 ? ", " : ""}${maybe.length} Maybe`}
-          </div>
+          </ButtonTertiary>
         )
       }
     >
@@ -277,11 +276,38 @@ function Attendees(props: { entityID: string; className?: string }) {
 
 function SendUpdateButton() {
   let { permissions } = useEntitySetContext();
+  let [input, setInput] = useState("");
+
   if (!!!permissions.write) return;
   return (
-    <ButtonPrimary fullWidthOnMobile>
-      <UpdateSmall /> Send an Update
-    </ButtonPrimary>
+    <Popover
+      asChild
+      trigger={
+        <ButtonPrimary fullWidthOnMobile>
+          <UpdateSmall /> Send an Update
+        </ButtonPrimary>
+      }
+    >
+      <div className="rsvpMessageComposer flex flex-col w-full max-w-md">
+        <label className="font-bold text-secondary">
+          Write a short update
+          <textarea
+            id="rsvp-message-input"
+            value={input}
+            onChange={(e) => {
+              setInput(e.target.value);
+            }}
+            className="input-with-border w-full h-32 mt-1 font-normal text-primary"
+          />
+        </label>
+        <div className="flex justify-between items-start">
+          <div id="char-count" className="text-sm text-tertiary">
+            {input.length}/300
+          </div>
+          <ButtonPrimary className="place-self-end ">Send</ButtonPrimary>
+        </div>
+      </div>
+    </Popover>
   );
 }
 
@@ -396,7 +422,7 @@ function ContactDetailsForm({
             }
           }}
         >
-          RSVP
+          RSVP as {status === "GOING" ? "Going" : "Maybe"}
         </ButtonPrimary>
       </div>
     </div>
@@ -430,7 +456,7 @@ function ContactDetailsForm({
 const ConsentPopover = () => {
   return (
     <Popover
-      className="max-w-xs text-sm"
+      className="max-w-xs text-sm text-secondary"
       trigger={<InfoSmall className="text-accent-contrast" />}
     >
       Clicking this button means that you are consenting to receive SMS messages
