@@ -2,27 +2,52 @@ import { useEntity, useReplicache } from "src/replicache";
 import { BlockProps } from "./Block";
 import { ChevronProps, DayPicker } from "react-day-picker";
 import { Popover } from "components/Popover";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ArrowRightTiny, BlockCalendarSmall } from "components/Icons";
 import { useEntitySetContext } from "components/EntitySetProvider";
 import { useUIState } from "src/useUIState";
 import { setHours, setMinutes } from "date-fns";
 import { Separator } from "react-aria-components";
 import { Checkbox } from "components/Checkbox";
+import { useInitialPageLoad } from "components/InitialPageLoadProvider";
+import { useSpring, animated } from "@react-spring/web";
 
 export function DateTimeBlock(props: BlockProps) {
+  const [isClient, setIsClient] = useState(false);
+  let initialPageLoad = useInitialPageLoad();
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
+  if (!isClient && !initialPageLoad)
+    return (
+      <div
+        className={`flex flex-row gap-2 group/date w-64 z-[1] border border-transparent`}
+      >
+        <BlockCalendarSmall className="text-tertiary" />
+      </div>
+    );
+
+  return <BaseDateTimeBlock {...props} initalLoad={initialPageLoad} />;
+}
+
+export function BaseDateTimeBlock(
+  props: BlockProps & { initalLoad?: boolean },
+) {
   let { rep } = useReplicache();
   let { permissions } = useEntitySetContext();
   let dateFact = useEntity(props.entityID, "block/date-time");
+  let selectedDate = useMemo(() => {
+    if (!dateFact) return new Date();
+    let d = new Date(dateFact.data.value);
+    return d;
+  }, [dateFact]);
 
   const [timeValue, setTimeValue] = useState<string>(
     () =>
-      `${new Date().getHours().toString().padStart(2, "0")}:${new Date().getMinutes().toString().padStart(2, "0")}`,
+      `${selectedDate.getHours().toString().padStart(2, "0")}:${selectedDate.getMinutes().toString().padStart(2, "0")}`,
   );
-  let selectedDate = useMemo(() => {
-    if (!dateFact) return new Date();
-    return new Date(dateFact.data.value);
-  }, [dateFact]);
 
   let isSelected = useUIState((s) =>
     s.selectedBlocks.find((b) => b.value === props.entityID),
@@ -32,8 +57,8 @@ export function DateTimeBlock(props: BlockProps) {
 
   const handleTimeChange: React.ChangeEventHandler<HTMLInputElement> = (e) => {
     const time = e.target.value;
+    setTimeValue(time);
     if (!dateFact) {
-      setTimeValue(time);
       return;
     }
     const [hours, minutes] = time.split(":").map((str) => parseInt(str, 10));
@@ -48,7 +73,6 @@ export function DateTimeBlock(props: BlockProps) {
       },
       attribute: "block/date-time",
     });
-    setTimeValue(time);
   };
 
   const handleDaySelect = (date: Date | undefined) => {
@@ -101,35 +125,41 @@ export function DateTimeBlock(props: BlockProps) {
       `}
         >
           <BlockCalendarSmall className="text-tertiary" />
-          {dateFact ? (
-            <div
-              suppressHydrationWarning={true}
-              className={`font-bold
+          <FadeIn
+            active={props.initalLoad === undefined ? true : props.initalLoad}
+          >
+            {dateFact ? (
+              <div
+                className={`font-bold
               ${!permissions.write || isLocked ? "" : "group-hover/date:underline"}
               `}
-            >
-              {selectedDate.toLocaleDateString(undefined, {
-                month: "short",
-                year: "numeric",
-                day: "numeric",
-              })}{" "}
-              {!dateFact.data.dateOnly ? (
-                <span suppressHydrationWarning={true}>
-                  |{" "}
-                  {selectedDate.toLocaleTimeString(undefined, {
-                    hour: "numeric",
-                    minute: "numeric",
-                  })}
-                </span>
-              ) : null}
-            </div>
-          ) : (
-            <div
-              className={`italic text-tertiary  text-left group-hover/date:underline`}
-            >
-              {permissions.write ? "add a date and time..." : "TBD..."}
-            </div>
-          )}
+              >
+                {selectedDate.toLocaleDateString(undefined, {
+                  month: "short",
+                  year:
+                    new Date().getFullYear() !== selectedDate.getFullYear()
+                      ? "numeric"
+                      : undefined,
+                  day: "numeric",
+                })}{" "}
+                {!dateFact.data.dateOnly ? (
+                  <span>
+                    |{" "}
+                    {selectedDate.toLocaleTimeString([], {
+                      hour: "numeric",
+                      minute: "numeric",
+                    })}
+                  </span>
+                ) : null}
+              </div>
+            ) : (
+              <div
+                className={`italic text-tertiary  text-left group-hover/date:underline`}
+              >
+                {permissions.write ? "add a date and time..." : "TBD..."}
+              </div>
+            )}
+          </FadeIn>
         </div>
       }
     >
@@ -191,6 +221,11 @@ export function DateTimeBlock(props: BlockProps) {
     </Popover>
   );
 }
+
+let FadeIn = (props: { children: React.ReactNode; active: boolean }) => {
+  let spring = useSpring({ opacity: props.active ? 1 : 0 });
+  return <animated.div style={spring}>{props.children}</animated.div>;
+};
 
 const CustomChevron = (props: ChevronProps) => {
   return (

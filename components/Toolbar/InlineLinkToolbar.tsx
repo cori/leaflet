@@ -108,7 +108,8 @@ export function InlineLinkToolbar(props: { onClose: () => void }) {
             if (!editor || start === null || !end || !focusedBlock) return;
             let tr = editor.tr;
             let href = linkValue;
-            if (!href.startsWith("http")) href = `https://${href}`;
+            if (!href.startsWith("http") && !href.startsWith("mailto"))
+              href = `https://${href}`;
             tr.addMark(start, end, schema.marks.link.create({ href }));
             tr.setSelection(TextSelection.create(tr.doc, tr.selection.to));
             setEditorState(focusedBlock?.entityID, {
@@ -132,7 +133,7 @@ export function InlineLinkToolbar(props: { onClose: () => void }) {
 
         if the user changes the link, then the button reverts to a check mark.
         */}
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-3 w-4">
         <button
           disabled={!linkValue || linkValue === ""}
           className="hover:text-accent-contrast -mr-6 disabled:text-border"
@@ -143,7 +144,8 @@ export function InlineLinkToolbar(props: { onClose: () => void }) {
             let tr = editor.tr;
 
             let href = linkValue;
-            if (!href.startsWith("http")) href = `https://${href}`;
+            if (!href.startsWith("http") && !href.startsWith("mailto"))
+              href = `https://${href}`;
             tr.addMark(start, end, schema.marks.link.create({ href }));
             setEditorState(focusedBlock?.entityID, {
               editor: editor.apply(tr),
