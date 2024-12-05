@@ -17,6 +17,7 @@ import { create } from "zustand";
 import { combine, createJSONStorage, persist } from "zustand/middleware";
 import { useUIState } from "src/useUIState";
 import { Separator } from "components/Layout";
+import { theme } from "tailwind.config";
 
 type RSVP_Status = Database["public"]["Enums"]["rsvp_status"];
 let Statuses = ["GOING", "NOT_GOING", "MAYBE"];
@@ -288,23 +289,45 @@ function SendUpdateButton() {
         </ButtonPrimary>
       }
     >
-      <div className="rsvpMessageComposer flex flex-col w-full max-w-md">
-        <label className="font-bold text-secondary">
-          Write a short update
+      <div className="rsvpMessageComposer flex flex-col gap-2 w-auto max-w-md">
+        <label className="flex flex-col font-bold text-secondary">
+          <p>Send a Text Blast</p>
+          <small className="font-normal text-secondary">
+            Write and send a short message as a text message to everyone who is{" "}
+            <b>Going</b> or a <b>Maybe</b>.
+          </small>
+
           <textarea
             id="rsvp-message-input"
             value={input}
             onChange={(e) => {
               setInput(e.target.value);
             }}
-            className="input-with-border w-full h-32 mt-1 font-normal text-primary"
+            className="input-with-border w-full h-[150px] mt-1 pt-0.5 font-normal text-primary"
           />
         </label>
         <div className="flex justify-between items-start">
-          <div id="char-count" className="text-sm text-tertiary">
-            {input.length}/300
+          <div
+            className={`rsvpMessageCharCounter text-sm text-tertiary`}
+            style={
+              input.length > 300
+                ? {
+                    color: theme.colors["accent-contrast"],
+                    fontWeight: "bold",
+                  }
+                : {
+                    color: theme.colors["tertiary"],
+                  }
+            }
+          >
+            {input.length}/300 {input.length > 300 && " (too long!)"}
           </div>
-          <ButtonPrimary className="place-self-end ">Send</ButtonPrimary>
+          <ButtonPrimary
+            disabled={input.length > 300}
+            className="place-self-end "
+          >
+            Send
+          </ButtonPrimary>
         </div>
       </div>
     </Popover>

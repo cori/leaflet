@@ -23,15 +23,15 @@ export const ButtonPrimary = forwardRef<
       ref={ref}
       className={`
         m-0 h-max
-        ${props.fullWidth ? "w-full" : props.fullWidthOnMobile ? " sm:w-max w-full" : "w-max"}
+        ${props.fullWidth ? "w-full" : props.fullWidthOnMobile ? "w-full sm:w-max" : "w-max"}
         ${props.compact ? "py-0 px-1" : "px-2 py-0.5 "}
-  bg-accent-1  outline-transparent border border-accent-1
-  rounded-md text-base font-bold text-accent-2
-  flex gap-2 items-center justify-center shrink-0
-  transparent-outline hover:outline-accent-1 outline-offset-1
-  disabled:bg-border-light disabled:text-border disabled:hover:text-border
-  ${props.className}
-`}
+        bg-accent-1  outline-transparent border border-accent-1
+        rounded-md text-base font-bold text-accent-2
+        flex gap-2 items-center justify-center shrink-0
+        transparent-outline hover:outline-accent-1 outline-offset-1
+        disabled:bg-border-light disabled:border-border-light disabled:text-border disabled:hover:text-border
+        ${props.className}
+      `}
     >
       {props.children}
     </button>

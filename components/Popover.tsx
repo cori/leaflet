@@ -16,17 +16,21 @@ export const Popover = (props: {
 }) => {
   return (
     <RadixPopover.Root open={props.open}>
-      <RadixPopover.Trigger
-        disabled={props.disabled}
-        className="w-max"
-        asChild={props.asChild}
-      >
+      <RadixPopover.Trigger disabled={props.disabled} asChild={props.asChild}>
         {props.trigger}
       </RadixPopover.Trigger>
       <RadixPopover.Portal>
         <NestedCardThemeProvider>
           <RadixPopover.Content
-            className={`z-20 bg-bg-page border border-border rounded-md px-3 py-2 max-h-[var(--radix-popover-content-available-height)] overflow-y-scroll no-scrollbar shadow-md ${props.className}`}
+            className={`
+              z-20 bg-bg-page
+              px-3 py-2
+              max-h-[var(--radix-popover-content-available-height)]
+              max-w-[var(--radix-popover-content-available-width)]
+              border border-border rounded-md shadow-md
+              overflow-y-scroll no-scrollbar
+              ${props.className}
+            `}
             align={props.align ? props.align : "center"}
             sideOffset={4}
             collisionPadding={16}
