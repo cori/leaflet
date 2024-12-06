@@ -18,6 +18,7 @@ import { combine, createJSONStorage, persist } from "zustand/middleware";
 import { useUIState } from "src/useUIState";
 import { Separator } from "components/Layout";
 import { theme } from "tailwind.config";
+import { useSmoker } from "components/Toast";
 
 type RSVP_Status = Database["public"]["Enums"]["rsvp_status"];
 let Statuses = ["GOING", "NOT_GOING", "MAYBE"];
@@ -151,7 +152,6 @@ function YourRSVPStatus(props: { entityID: string; compact?: boolean }) {
 
   let updateStatus = async (status: RSVP_Status) => {
     if (!data?.authToken) return;
-    console.log(name);
     await submitRSVP({
       status,
       name: name,
@@ -220,7 +220,6 @@ function Attendees(props: { entityID: string; className?: string }) {
   let maybe = attendees.filter((rsvp) => rsvp.status === "MAYBE");
   let notGoing = attendees.filter((rsvp) => rsvp.status === "NOT_GOING");
 
-  console.log(attendees);
   return (
     <Popover
       align="start"
@@ -354,6 +353,8 @@ function ContactDetailsForm({
   entityID: string;
   setState: (s: State) => void;
 }) {
+  let smoker = useSmoker();
+
   let { data, mutate } = useRSVPData();
   let [state, setState] = useState<
     { state: "details" } | { state: "confirm"; token: string }
@@ -367,11 +368,16 @@ function ContactDetailsForm({
   let submit = async (
     token: Awaited<ReturnType<typeof confirmPhoneAuthToken>>,
   ) => {
-    await submitRSVP({
-      status,
-      name: name,
-      entity: entityID,
-    });
+    try {
+      await submitRSVP({
+        status,
+        name: name,
+        entity: entityID,
+      });
+    } catch (e) {
+      //handle failed confirm
+      return false;
+    }
 
     mutate({
       authToken: token,
@@ -385,6 +391,7 @@ function ContactDetailsForm({
         },
       ],
     });
+    return true;
   };
   return state.state === "details" ? (
     <div className="rsvpForm flex flex-col gap-2">
@@ -450,28 +457,50 @@ function ContactDetailsForm({
       </div>
     </div>
   ) : (
-    <div className="flex flex-row gap-2">
-      <input
-        placeholder="confirmation code"
-        value={formState.confirmationCode || ""}
-        onChange={(e) =>
-          setFormState((state) => ({
-            ...state,
-            confirmationCode: e.target.value,
-          }))
-        }
-      />
-      <button
-        onClick={async () => {
-          let token = await confirmPhoneAuthToken(
-            state.token,
-            formState.confirmationCode,
-          );
-          submit(token);
+    <div className="flex flex-col gap-2">
+      <div className="rsvpNameInput relative w-full flex flex-col gap-0.5">
+        <label className="absolute top-0.5 left-[6px] text-xs font-bold italic text-tertiary">
+          confirmation code
+        </label>
+        <input
+          placeholder="000000"
+          className="input-with-border !pt-5 w-full "
+          value={formState.confirmationCode || ""}
+          onChange={(e) =>
+            setFormState((state) => ({
+              ...state,
+              confirmationCode: e.target.value,
+            }))
+          }
+        />
+        <div className="text-xs italic text-tertiary leading-tight">
+          we texted a confirmation code to your phone number!
+        </div>
+      </div>
+      <hr className="border-border" />
+
+      <ButtonPrimary
+        className="place-self-end"
+        onMouseDown={async (e) => {
+          try {
+            let token = await confirmPhoneAuthToken(
+              state.token,
+              formState.confirmationCode,
+            );
+            submit(token);
+          } catch (error) {
+            smoker({
+              alignOnMobile: "left",
+              error: true,
+              text: "invalid code!",
+              position: { x: e.clientX, y: e.clientY },
+            });
+            return;
+          }
         }}
       >
-        confirm
-      </button>
+        Confirm
+      </ButtonPrimary>
     </div>
   );
 }

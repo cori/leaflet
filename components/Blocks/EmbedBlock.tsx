@@ -38,9 +38,9 @@ export const EmbedBlock = (props: BlockProps & { preview?: boolean }) => {
         id={props.preview ? undefined : elementId.block(props.entityID).input}
         className={`
           w-full h-[420px] p-2
-          text-tertiary hover:text-accent-contrast hover:cursor-pointer 
-          flex flex-auto gap-2 items-center justify-center hover:border-2 border-dashed rounded-lg 
-          ${isSelected ? "border-2 border-tertiary" : "border border-border"} 
+          text-tertiary hover:text-accent-contrast hover:cursor-pointer
+          flex flex-auto gap-2 items-center justify-center hover:border-2 border-dashed rounded-lg
+          ${isSelected ? "border-2 border-tertiary" : "border border-border"}
           ${props.pageType === "canvas" && "bg-bg-page"}`}
         onMouseDown={() => {
           focusBlock(
@@ -57,9 +57,9 @@ export const EmbedBlock = (props: BlockProps & { preview?: boolean }) => {
   return (
     <div className={`w-full aspect-[4/3]`}>
       {/*
-	  the iframe! 
+	  the iframe!
 	  very simple, just a fixed height (could add as an option)
-	  can also add 'allow' and 'referrerpolicy' attributes later if needed 
+	  can also add 'allow' and 'referrerpolicy' attributes later if needed
 	  */}
       <iframe
         className={`
@@ -128,7 +128,7 @@ const BlockLinkInput = (props: BlockProps) => {
       },
     });
   };
-  let smoke = useSmoker();
+  let smoker = useSmoker();
 
   return (
     <div>
@@ -153,7 +153,7 @@ const BlockLinkInput = (props: BlockProps) => {
               if (!linkValue) return;
               if (!isUrl(linkValue)) {
                 let rect = e.currentTarget.getBoundingClientRect();
-                smoke({
+                smoker({
                   error: true,
                   text: "invalid url!",
                   position: { x: rect.left, y: rect.top - 8 },
@@ -170,7 +170,7 @@ const BlockLinkInput = (props: BlockProps) => {
             onMouseDown={(e) => {
               e.preventDefault();
               if (!linkValue || linkValue === "") {
-                smoke({
+                smoker({
                   error: true,
                   text: "no url!",
                   position: { x: e.clientX, y: e.clientY },
@@ -178,7 +178,7 @@ const BlockLinkInput = (props: BlockProps) => {
                 return;
               }
               if (!isUrl(linkValue)) {
-                smoke({
+                smoker({
                   error: true,
                   text: "invalid url!",
                   position: { x: e.clientX, y: e.clientY },
