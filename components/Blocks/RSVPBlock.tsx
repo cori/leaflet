@@ -281,6 +281,7 @@ function SendUpdateButton() {
   if (!!!permissions.write) return;
   return (
     <Popover
+      className="max-w-[var(--radix-popover-content-available-width)]"
       asChild
       trigger={
         <ButtonPrimary fullWidthOnMobile>
@@ -292,8 +293,8 @@ function SendUpdateButton() {
         <label className="flex flex-col font-bold text-secondary">
           <p>Send a Text Blast</p>
           <small className="font-normal text-secondary">
-            Write and send a short message as a text message to everyone who is{" "}
-            <b>Going</b> or a <b>Maybe</b>.
+            Send a short text message to everyone who is <b>Going</b> or a{" "}
+            <b>Maybe</b>.
           </small>
 
           <textarea
@@ -354,6 +355,8 @@ function ContactDetailsForm({
   setState: (s: State) => void;
 }) {
   let smoker = useSmoker();
+  let focusWithinStyles =
+    "focus-within:border-tertiary focus-within:outline focus-within:outline-2 focus-within:outline-tertiary focus-within:outline-offset-1";
 
   let { data, mutate } = useRSVPData();
   let [state, setState] = useState<
@@ -396,33 +399,43 @@ function ContactDetailsForm({
   return state.state === "details" ? (
     <div className="rsvpForm flex flex-col gap-2">
       <div className="rsvpInputs flex sm:flex-row flex-col gap-2 w-fit place-self-center ">
-        <div className="rsvpNameInput relative w-full basis-1/3">
-          <label className="absolute top-0.5 left-[6px] text-xs font-bold italic text-tertiary">
-            name
-          </label>
+        <label
+          htmlFor="rsvp-name-input"
+          className={`
+            rsvpNameInput input-with-border basis-1/3 h-fit
+            flex flex-col ${focusWithinStyles}`}
+        >
+          <div className="text-xs font-bold italic text-tertiary">name</div>
           <input
+            autoFocus
+            id="rsvp-name-input"
             placeholder="..."
-            className="input-with-border !pt-5 w-full "
+            className=" bg-transparent disabled:text-tertiary w-full appearance-none focus:outline-0"
             value={name}
             onChange={(e) => setName(e.target.value)}
           />
-        </div>
+        </label>
         <div
           className={`rsvpPhoneInputWrapper  relative flex flex-col gap-0.5 w-full basis-2/3`}
         >
-          <div
-            className={`rsvpPhoneInput input-with-border flex flex-col  ${!!data?.authToken.phone_number && "bg-border-light border-border-light text-tertiary"}`}
+          <label
+            htmlFor="rsvp-phone-input"
+            className={`
+              rsvpPhoneInput input-with-border
+              flex flex-col ${focusWithinStyles}
+              ${!!data?.authToken.phone_number && "bg-border-light border-border-light text-tertiary"}`}
           >
-            <label className=" text-xs font-bold italic text-tertiary">
+            <div className=" text-xs font-bold italic text-tertiary">
               phone number
-            </label>
+            </div>
             <div className="flex gap-2 ">
               <div className="w-max shrink-0">🇺🇸 +1</div>
               <Separator />
 
               <input
+                id="rsvp-phone-input"
                 placeholder="0000000000"
-                className="bg-transparent disabled:text-tertiary w-full"
+                className=" bg-transparent disabled:text-tertiary w-full appearance-none focus:outline-0"
                 disabled={!!data?.authToken.phone_number}
                 value={data?.authToken.phone_number || formState.phone}
                 onChange={(e) =>
@@ -430,7 +443,7 @@ function ContactDetailsForm({
                 }
               />
             </div>
-          </div>
+          </label>
           <div className="text-xs italic text-tertiary leading-tight">
             Non-US numbers will receive messages through{" "}
             <strong>WhatsApp</strong>
@@ -458,11 +471,12 @@ function ContactDetailsForm({
     </div>
   ) : (
     <div className="flex flex-col gap-2">
-      <div className="rsvpNameInput relative w-full flex flex-col gap-0.5">
-        <label className="absolute top-0.5 left-[6px] text-xs font-bold italic text-tertiary">
+      <label className="rsvpNameInput relative w-full flex flex-col gap-0.5">
+        <div className="absolute top-0.5 left-[6px] text-xs font-bold italic text-tertiary">
           confirmation code
-        </label>
+        </div>
         <input
+          autoFocus
           placeholder="000000"
           className="input-with-border !pt-5 w-full "
           value={formState.confirmationCode || ""}
@@ -476,7 +490,7 @@ function ContactDetailsForm({
         <div className="text-xs italic text-tertiary leading-tight">
           we texted a confirmation code to your phone number!
         </div>
-      </div>
+      </label>
       <hr className="border-border" />
 
       <ButtonPrimary

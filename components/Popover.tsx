@@ -26,7 +26,6 @@ export const Popover = (props: {
               z-20 bg-bg-page
               px-3 py-2
               max-h-[var(--radix-popover-content-available-height)]
-              max-w-[var(--radix-popover-content-available-width)]
               border border-border rounded-md shadow-md
               overflow-y-scroll no-scrollbar
               ${props.className}
