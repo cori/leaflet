@@ -18,7 +18,7 @@ import { combine, createJSONStorage, persist } from "zustand/middleware";
 import { useUIState } from "src/useUIState";
 import { Separator } from "components/Layout";
 import { theme } from "tailwind.config";
-import { useSmoker } from "components/Toast";
+import { useSmoker, useToaster } from "components/Toast";
 
 type RSVP_Status = Database["public"]["Enums"]["rsvp_status"];
 let Statuses = ["GOING", "NOT_GOING", "MAYBE"];
@@ -277,12 +277,15 @@ function Attendees(props: { entityID: string; className?: string }) {
 function SendUpdateButton() {
   let { permissions } = useEntitySetContext();
   let [input, setInput] = useState("");
+  let toaster = useToaster();
+  let [open, setOpen] = useState(false);
 
   if (!!!permissions.write) return;
   return (
     <Popover
-      className="max-w-[var(--radix-popover-content-available-width)]"
       asChild
+      open={open}
+      onOpenChange={(open) => setOpen(open)}
       trigger={
         <ButtonPrimary fullWidthOnMobile>
           <UpdateSmall /> Send an Update
@@ -325,6 +328,13 @@ function SendUpdateButton() {
           <ButtonPrimary
             disabled={input.length > 300}
             className="place-self-end "
+            onClick={() => {
+              toaster({
+                content: <div className="font-bold">Update sent!</div>,
+                type: "success",
+              });
+              setOpen(false);
+            }}
           >
             Send
           </ButtonPrimary>
