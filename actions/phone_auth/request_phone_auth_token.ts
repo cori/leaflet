@@ -4,10 +4,21 @@ import { randomBytes } from "crypto";
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
 import { phone_number_auth_tokens } from "drizzle/schema";
+import twilio from "twilio";
 
 async function sendAuthCode(phoneNumber: string, code: string) {
-  // TODO: Actually send SMS, for now just log
-  console.log(`Sending auth code ${code} to ${phoneNumber}`);
+  const accountSid = process.env.TWILIO_ACCOUNT_SID;
+  const authToken = process.env.TWILIO_AUTH_TOKEN;
+  const client = twilio(accountSid, authToken);
+
+  const message = await client.messages.create({
+    contentSid: "HX5ebfae4d2a423808486e773e8a22488d",
+    contentVariables: JSON.stringify({ 1: code }),
+    from: "whatsapp:+18449523391",
+    messagingServiceSid: "MGffbf9a66770350b25caf3b80b9aac481",
+    to: `whatsapp:${phoneNumber}`,
+  });
+  console.log(message.body);
 }
 
 export async function createPhoneAuthToken(phoneNumber: string) {

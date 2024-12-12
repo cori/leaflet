@@ -19,6 +19,9 @@ import { useUIState } from "src/useUIState";
 import { Separator } from "components/Layout";
 import { theme } from "tailwind.config";
 import { useSmoker, useToaster } from "components/Toast";
+import { sendUpdateToRSVPS } from "actions/sendUpdateToRSVPS";
+import { useReplicache } from "src/replicache";
+import { permission_tokens } from "drizzle/schema";
 
 type RSVP_Status = Database["public"]["Enums"]["rsvp_status"];
 let Statuses = ["GOING", "NOT_GOING", "MAYBE"];
@@ -70,7 +73,7 @@ function RSVPForm(props: { entityID: string }) {
           <Attendees entityID={props.entityID} className="font-bold" />
           <hr className="block border-border sm:hidden w-full my-1" />
 
-          <SendUpdateButton />
+          <SendUpdateButton entityID={props.entityID} />
         </div>
         <hr className="border-border w-full hidden sm:block" />
         <YourRSVPStatus entityID={props.entityID} compact />
@@ -103,7 +106,7 @@ function RSVPForm(props: { entityID: string }) {
           </div>
           <hr className="block border-border sm:hidden w-full my-1" />
 
-          <SendUpdateButton />
+          <SendUpdateButton entityID={props.entityID} />
         </div>
         <hr className="border-border sm:block hidden" />
         <Attendees entityID={props.entityID} className="text-sm sm:pt-0 pt-2" />
@@ -274,8 +277,9 @@ function Attendees(props: { entityID: string; className?: string }) {
   );
 }
 
-function SendUpdateButton() {
+function SendUpdateButton(props: { entityID: string }) {
   let { permissions } = useEntitySetContext();
+  let { permission_token } = useReplicache();
   let [input, setInput] = useState("");
   let toaster = useToaster();
   let [open, setOpen] = useState(false);
@@ -328,7 +332,13 @@ function SendUpdateButton() {
           <ButtonPrimary
             disabled={input.length > 300}
             className="place-self-end "
-            onClick={() => {
+            onClick={async () => {
+              if (!permission_token) return;
+              await sendUpdateToRSVPS(permission_token, {
+                entity: props.entityID,
+                message: input,
+                eventName: "Idk still figuring this out",
+              });
               toaster({
                 content: <div className="font-bold">Update sent!</div>,
                 type: "success",
@@ -433,7 +443,7 @@ function ContactDetailsForm({
             className={`
               rsvpPhoneInput input-with-border
               flex flex-col ${focusWithinStyles}
-              ${!!data?.authToken.phone_number && "bg-border-light border-border-light text-tertiary"}`}
+              ${!!data?.authToken?.phone_number && "bg-border-light border-border-light text-tertiary"}`}
           >
             <div className=" text-xs font-bold italic text-tertiary">
               phone number
@@ -446,8 +456,8 @@ function ContactDetailsForm({
                 id="rsvp-phone-input"
                 placeholder="0000000000"
                 className=" bg-transparent disabled:text-tertiary w-full appearance-none focus:outline-0"
-                disabled={!!data?.authToken.phone_number}
-                value={data?.authToken.phone_number || formState.phone}
+                disabled={!!data?.authToken?.phone_number}
+                value={data?.authToken?.phone_number || formState.phone}
                 onChange={(e) =>
                   setFormState((state) => ({ ...state, phone: e.target.value }))
                 }
@@ -470,7 +480,7 @@ function ContactDetailsForm({
             if (data?.authToken) {
               submit(data.authToken);
             } else {
-              let tokenId = await createPhoneAuthToken(formState.phone);
+              let tokenId = await createPhoneAuthToken("+1" + formState.phone);
               setState({ state: "confirm", token: tokenId });
             }
           }}
