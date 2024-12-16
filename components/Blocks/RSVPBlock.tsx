@@ -379,6 +379,7 @@ function ContactDetailsForm({
   let smoker = useSmoker();
   let focusWithinStyles =
     "focus-within:border-tertiary focus-within:outline focus-within:outline-2 focus-within:outline-tertiary focus-within:outline-offset-1";
+  let [checked, setChecked] = useState(false);
 
   let { data, mutate } = useRSVPData();
   let [state, setState] = useState<
@@ -475,8 +476,9 @@ function ContactDetailsForm({
 
       <hr className="border-border" />
       <div className="flex flex-row gap-2 w-full items-center justify-end">
-        <ConsentPopover />
+        <ConsentPopover checked={checked} setChecked={setChecked} />
         <ButtonPrimary
+          disabled={!checked}
           className="place-self-end"
           onClick={async () => {
             if (data?.authToken) {
@@ -541,13 +543,15 @@ function ContactDetailsForm({
   );
 }
 
-const ConsentPopover = () => {
-  let [checked, setChecked] = useState(false);
+const ConsentPopover = (props: {
+  checked: boolean;
+  setChecked: (checked: boolean) => void;
+}) => {
   return (
     <Checkbox
-      checked={checked}
+      checked={props.checked}
       onChange={() => {
-        setChecked(!checked);
+        props.setChecked(!props.checked);
       }}
     >
       <div className="text-sm text-secondary">
