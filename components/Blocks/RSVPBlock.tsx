@@ -22,6 +22,8 @@ import { useSmoker, useToaster } from "components/Toast";
 import { sendUpdateToRSVPS } from "actions/sendUpdateToRSVPS";
 import { useReplicache } from "src/replicache";
 import { permission_tokens } from "drizzle/schema";
+import { setConfig } from "next/config";
+import { Checkbox } from "components/Checkbox";
 
 type RSVP_Status = Database["public"]["Enums"]["rsvp_status"];
 let Statuses = ["GOING", "NOT_GOING", "MAYBE"];
@@ -540,13 +542,18 @@ function ContactDetailsForm({
 }
 
 const ConsentPopover = () => {
+  let [checked, setChecked] = useState(false);
   return (
-    <Popover
-      className="max-w-xs text-sm text-secondary"
-      trigger={<InfoSmall className="text-accent-contrast" />}
+    <Checkbox
+      checked={checked}
+      onChange={() => {
+        setChecked(!checked);
+      }}
     >
-      Clicking this button means that you are consenting to receive SMS messages
-      from us!
-    </Popover>
+      <div className="text-sm text-secondary">
+        Clicking RSVP means that you are consenting to receive SMS messages from
+        us!
+      </div>
+    </Checkbox>
   );
 };
