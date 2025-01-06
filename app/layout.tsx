@@ -5,11 +5,21 @@ import { Analytics } from "@vercel/analytics/react";
 import "./globals.css";
 import localFont from "next/font/local";
 import { PopUpProvider } from "components/Toast";
+import { IdentityProviderServer } from "components/IdentityProviderServer";
 
 export const metadata = {
   title: "Leaflet",
   description: "tiny interconnected social documents",
   metadataBase: `https://leaflet.pub`,
+};
+
+export const viewport = {
+  minimumScale: 1,
+  initialScale: 1,
+  maximumScale: 1,
+  width: "device-width",
+  viewportFit: "cover",
+  interactiveWidget: "resizes-content",
 };
 
 export const preferredRegion = ["sfo1"];
@@ -54,7 +64,9 @@ export default function RootLayout({
         <ServiceWorker />
         <InitialPageLoad>
           <PopUpProvider>
-            <ViewportSizeLayout>{children}</ViewportSizeLayout>
+            <IdentityProviderServer>
+              <ViewportSizeLayout>{children}</ViewportSizeLayout>
+            </IdentityProviderServer>
           </PopUpProvider>
         </InitialPageLoad>
       </body>

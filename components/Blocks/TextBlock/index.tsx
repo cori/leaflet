@@ -66,7 +66,7 @@ export function TextBlock(
       )}
       {permission && !props.preview && !isLocked?.data.value && (
         <div
-          className={`w-full relative group/text ${!initialized ? "hidden" : ""}`}
+          className={`w-full relative group ${!initialized ? "hidden" : ""}`}
         >
           <IOSBS {...props} />
           <BaseTextBlock {...props} />
@@ -77,18 +77,15 @@ export function TextBlock(
 }
 
 export function IOSBS(props: BlockProps) {
-  let selected = useUIState((s) =>
-    s.selectedBlocks.find((b) => b.value === props.entityID),
-  );
   let [initialRender, setInitialRender] = useState(true);
   useEffect(() => {
     setInitialRender(false);
   }, []);
-  if (selected || initialRender || !isIOS()) return null;
+  if (initialRender || !isIOS()) return null;
   return (
     <div
-      className="h-full w-full absolute cursor-text"
-      onMouseDown={(e) => {
+      className="h-full w-full absolute cursor-text group-focus-within:hidden py-[18px]"
+      onPointerUp={(e) => {
         e.preventDefault();
         focusBlock(props, {
           type: "coord",
@@ -110,7 +107,7 @@ export function IOSBS(props: BlockProps) {
               behavior: "smooth",
             });
           }
-        }, 750);
+        }, 100);
       }}
     />
   );
@@ -490,17 +487,26 @@ function useYJSValue(entityID: string) {
 
   useEffect(() => {
     if (!rep.rep) return;
+    let timeout = null as null | number;
     const f = async () => {
-      const update = Y.encodeStateAsUpdate(ydoc);
-      await rep.rep?.mutate.assertFact({
-        entity: entityID,
-        attribute: "block/text",
-        data: {
-          value: base64.fromByteArray(update),
-          type: "text",
-        },
-      });
+      const updateReplicache = async () => {
+        const update = Y.encodeStateAsUpdate(ydoc);
+        await rep.rep?.mutate.assertFact({
+          entity: entityID,
+          attribute: "block/text",
+          data: {
+            value: base64.fromByteArray(update),
+            type: "text",
+          },
+        });
+      };
+      if (timeout) clearTimeout(timeout);
+      updateReplicache();
+      timeout = window.setTimeout(async () => {
+        updateReplicache();
+      }, 20);
     };
+
     yText.observeDeep(f);
     return () => {
       yText.unobserveDeep(f);

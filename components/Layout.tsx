@@ -5,6 +5,7 @@ import {
   CardThemeProvider,
   NestedCardThemeProvider,
 } from "./ThemeManager/ThemeProvider";
+import { Input } from "./Input";
 
 export const Separator = (props: { classname?: string }) => {
   return (
@@ -82,6 +83,27 @@ export const MenuItem = (props: {
     >
       {props.children}
     </DropdownMenu.Item>
+  );
+};
+
+export const InputWithLabel = (
+  props: {
+    label: string;
+  } & JSX.IntrinsicElements["input"],
+) => {
+  let { label, ...inputProps } = props;
+  return (
+    <div>
+      <div className="input-with-border flex flex-col">
+        <label className="text-sm text-tertiary font-bold italic">
+          {props.label}
+          <Input
+            {...inputProps}
+            className={`appearance-none w-full font-normal bg-transparent text-base text-primary focus:outline-0 ${props.className}`}
+          />
+        </label>
+      </div>
+    </div>
   );
 };
 

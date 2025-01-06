@@ -38,6 +38,7 @@ import { useEntitySetContext } from "components/EntitySetProvider";
 import { isIOS, useViewportSize } from "@react-aria/utils";
 import { onMouseDown } from "src/utils/iosInputMouseDown";
 import { HoverButton } from "components/Buttons";
+import { useInitialPageLoad } from "components/InitialPageLoadProvider";
 
 export type pickers =
   | "null"
@@ -65,6 +66,7 @@ export function setColorAttribute(
 }
 export const ThemePopover = (props: { entityID: string; home?: boolean }) => {
   let { rep } = useReplicache();
+  let pageLoaded = useInitialPageLoad();
   // I need to get these variables from replicache and then write them to the DB. I also need to parse them into a state that can be used here.
   let leafletValue = useColorAttribute(props.entityID, "theme/page-background");
   let pageValue = useColorAttribute(props.entityID, "theme/card-background");
@@ -97,12 +99,14 @@ export const ThemePopover = (props: { entityID: string; home?: boolean }) => {
   let randomPositions = useMemo(() => {
     let values = [] as string[];
     for (let i = 0; i < 3; i++) {
-      values.push(
-        `${Math.floor(Math.random() * 100)}% ${Math.floor(Math.random() * 100)}%`,
-      );
+      if (!pageLoaded) values.push(`100% 100%`);
+      else
+        values.push(
+          `${Math.floor(Math.random() * 100)}% ${Math.floor(Math.random() * 100)}%`,
+        );
     }
     return values;
-  }, []);
+  }, [pageLoaded]);
 
   let gradient = [
     `radial-gradient(at ${randomPositions[0]}, ${accent1Value.toString("hex")}80 2px, transparent 70%)`,
@@ -222,71 +226,42 @@ export const ThemePopover = (props: { entityID: string; home?: boolean }) => {
                     Example Button
                   </div>
                 </div>
-                {!props.home && (
-                  <>
-                    <div className="flex flex-col mt-8 -mb-[6px] z-10">
-                      <div
-                        className="themeLeafletControls flex flex-col gap-2 h-full text-primary bg-bg-leaflet p-2 rounded-md border border-primary shadow-[0_0_0_1px_rgb(var(--bg-page))]"
-                        style={{ backgroundColor: "rgba(var(--bg-page, 0.6)" }}
-                      >
-                        <ColorPicker
-                          label="Page"
-                          alpha
-                          value={pageValue}
-                          setValue={set("theme/card-background")}
-                          thisPicker={"page"}
-                          openPicker={openPicker}
-                          setOpenPicker={setOpenPicker}
-                          closePicker={() => setOpenPicker("null")}
-                        />
-                        <ColorPicker
-                          label="Text"
-                          value={primaryValue}
-                          setValue={set("theme/primary")}
-                          thisPicker={"text"}
-                          openPicker={openPicker}
-                          setOpenPicker={setOpenPicker}
-                          closePicker={() => setOpenPicker("null")}
-                        />
-                      </div>
-                      <SectionArrow
-                        fill={theme.colors["primary"]}
-                        stroke={theme.colors["bg-page"]}
-                        className=" ml-2"
-                      />
-                    </div>
 
-                    <div
-                      onClick={(e) => {
-                        e.currentTarget === e.target && setOpenPicker("page");
-                      }}
-                      className="rounded-t-lg cursor-pointer p-2  border border-border border-b-transparent shadow-md text-primary"
-                      style={{
-                        backgroundColor:
-                          "rgba(var(--bg-page), var(--bg-page-alpha))",
-                      }}
-                    >
-                      <p
-                        onClick={() => {
-                          setOpenPicker("text");
-                        }}
-                        className=" cursor-pointer font-bold w-fit"
-                      >
-                        Hello!
-                      </p>
-                      <small onClick={() => setOpenPicker("text")}>
-                        Welcome to{" "}
-                        <span className="font-bold text-accent-contrast">
-                          Leaflet
-                        </span>
-                        . It&apos;s a super easy and fun way to make, share, and
-                        collab on little bits of paper
-                      </small>
-                    </div>
-                  </>
-                )}
+                <div className="flex flex-col mt-8 -mb-[6px] z-10">
+                  <div
+                    className="themeLeafletControls flex flex-col gap-2 h-full text-primary bg-bg-leaflet p-2 rounded-md border border-primary shadow-[0_0_0_1px_rgb(var(--bg-page))]"
+                    style={{ backgroundColor: "rgba(var(--bg-page, 0.6)" }}
+                  >
+                    <ColorPicker
+                      label={props.home ? "Menu" : "Page"}
+                      alpha
+                      value={pageValue}
+                      setValue={set("theme/card-background")}
+                      thisPicker={"page"}
+                      openPicker={openPicker}
+                      setOpenPicker={setOpenPicker}
+                      closePicker={() => setOpenPicker("null")}
+                    />
+                    <ColorPicker
+                      label={props.home ? "Menu Text" : "Page"}
+                      value={primaryValue}
+                      setValue={set("theme/primary")}
+                      thisPicker={"text"}
+                      openPicker={openPicker}
+                      setOpenPicker={setOpenPicker}
+                      closePicker={() => setOpenPicker("null")}
+                    />
+                  </div>
+                  <SectionArrow
+                    fill={theme.colors["primary"]}
+                    stroke={theme.colors["bg-page"]}
+                    className=" ml-2"
+                  />
+                </div>
+
+                <SamplePage setOpenPicker={setOpenPicker} home={props.home} />
               </div>
-              <WatermarkSetter entityID={props.entityID} />
+              {!props.home && <WatermarkSetter entityID={props.entityID} />}
             </div>
             <Popover.Arrow asChild width={16} height={8} viewBox="0 0 16 8">
               <PopoverArrow
@@ -333,6 +308,39 @@ function WatermarkSetter(props: { entityID: string }) {
     </label>
   );
 }
+
+const SamplePage = (props: {
+  home: boolean | undefined;
+  setOpenPicker: (picker: "page" | "text") => void;
+}) => {
+  return (
+    <div
+      onClick={(e) => {
+        e.currentTarget === e.target && props.setOpenPicker("page");
+      }}
+      className={`${props.home ? "rounded-md " : "rounded-t-lg "} cursor-pointer p-2  border border-border border-b-transparent shadow-md text-primary`}
+      style={{
+        backgroundColor: "rgba(var(--bg-page), var(--bg-page-alpha))",
+      }}
+    >
+      <p
+        onClick={() => {
+          props.setOpenPicker("text");
+        }}
+        className=" cursor-pointer font-bold w-fit"
+      >
+        Hello!
+      </p>
+      <small onClick={() => props.setOpenPicker("text")}>
+        Welcome to{" "}
+        <span className="font-bold text-accent-contrast">Leaflet</span>.
+        It&apos;s a super easy and fun way to make, share, and collab on little
+        bits of paper
+      </small>
+    </div>
+  );
+};
+
 let thumbStyle =
   "w-4 h-4 rounded-full border-2 border-white shadow-[0_0_0_1px_#8C8C8C,_inset_0_0_0_1px_#8C8C8C]";
 
@@ -602,7 +610,7 @@ export const LeafletBGPicker = (props: {
         </label>
       </div>
       {open && (
-        <div className="bgImageAndColorPicker w-full flex flex-col gap-2 pb-2">
+        <div className="bgImageAndColorPicker w-full flex flex-col gap-2 ">
           <SpectrumColorPicker
             value={bgColor}
             onChange={setColorAttribute(

@@ -55,7 +55,7 @@ export const EmbedBlock = (props: BlockProps & { preview?: boolean }) => {
   }
 
   return (
-    <div className={`w-full aspect-[4/3]`}>
+    <div className="w-full aspect-[4/3]">
       {/*
 	  the iframe!
 	  very simple, just a fixed height (could add as an option)
@@ -72,15 +72,15 @@ export const EmbedBlock = (props: BlockProps & { preview?: boolean }) => {
         allow="fullscreen"
         loading="lazy"
       ></iframe>
-
-      <a
-        href={url?.data.value}
-        target="_blank"
-        style={{ wordBreak: "break-word" }} // better than tailwind break-all!
-        className={`py-0.5 min-w-0 w-max line-clamp-1 text-xs italic text-accent-contrast`}
-      >
-        {url?.data.value}
-      </a>
+      <div className="w-full overflow-x-hidden truncate text-xs italic text-accent-contrast">
+        <a
+          href={url?.data.value}
+          target="_blank"
+          className={`py-0.5 min-w-0 w-full whitespace-nowrap`}
+        >
+          {url?.data.value}
+        </a>
+      </div>
     </div>
   );
 };
