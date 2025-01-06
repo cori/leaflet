@@ -385,12 +385,22 @@ export type Database = {
           like: unknown
         }[]
       }
+      pull_data: {
+        Args: {
+          token_id: string
+          client_group_id: string
+        }
+        Returns: Database["public"]["CompositeTypes"]["pull_result"]
+      }
     }
     Enums: {
       [_ in never]: never
     }
     CompositeTypes: {
-      [_ in never]: never
+      pull_result: {
+        client_groups: Json | null
+        facts: Json | null
+      }
     }
   }
   storage: {
