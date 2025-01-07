@@ -156,7 +156,7 @@ export function ContactDetailsForm({
       <div className="flex flex-row gap-2 w-full items-center justify-end">
         <ConsentPopover checked={checked} setChecked={setChecked} />
         <ButtonPrimary
-          disabled={!checked || !formState.phone || !formState.confirmationCode}
+          disabled={!checked || !formState.phone || !formState.countryCode}
           className="place-self-end"
           onClick={async () => {
             if (data?.authToken) {
