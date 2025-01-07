@@ -1,6 +1,12 @@
+"use client";
 import { Database } from "supabase/database.types";
-import { BlockProps, BaseBlock, ListMarker, Block } from "./Block";
-import { useState } from "react";
+import {
+  BlockProps,
+  BaseBlock,
+  ListMarker,
+  Block,
+} from "components/Blocks/Block";
+import { createContext, useContext, useState } from "react";
 import { submitRSVP } from "actions/phone_rsvp_to_event";
 import { createPhoneAuthToken } from "actions/phone_auth/request_phone_auth_token";
 import { confirmPhoneAuthToken } from "actions/phone_auth/confirm_phone_auth_token";
@@ -24,10 +30,13 @@ import { useReplicache } from "src/replicache";
 import { permission_tokens } from "drizzle/schema";
 import { setConfig } from "next/config";
 import { Checkbox } from "components/Checkbox";
+import * as Select from "@radix-ui/react-select";
+import { countryCodes } from "src/constants/countryCodes";
+import { ContactDetailsForm } from "./ContactDetailsForm";
 
-type RSVP_Status = Database["public"]["Enums"]["rsvp_status"];
+export type RSVP_Status = Database["public"]["Enums"]["rsvp_status"];
 let Statuses = ["GOING", "NOT_GOING", "MAYBE"];
-type State =
+export type State =
   | {
       state: "default";
     }
@@ -57,7 +66,6 @@ function RSVPForm(props: { entityID: string }) {
   let setStatus = (status: RSVP_Status) => {
     setState({ status, state: "contact_details" });
   };
-  let { name } = useRSVPNameState();
 
   let rsvpStatus = data?.rsvps?.find(
     (rsvp) =>
@@ -356,7 +364,7 @@ function SendUpdateButton(props: { entityID: string }) {
   );
 }
 
-let useRSVPNameState = create(
+export let useRSVPNameState = create(
   persist(
     combine({ name: "" }, (set) => ({
       setName: (name: string) => set({ name }),
@@ -367,197 +375,3 @@ let useRSVPNameState = create(
     },
   ),
 );
-
-function ContactDetailsForm({
-  status,
-  entityID,
-}: {
-  status: RSVP_Status;
-  entityID: string;
-  setState: (s: State) => void;
-}) {
-  let smoker = useSmoker();
-  let focusWithinStyles =
-    "focus-within:border-tertiary focus-within:outline focus-within:outline-2 focus-within:outline-tertiary focus-within:outline-offset-1";
-  let [checked, setChecked] = useState(false);
-
-  let { data, mutate } = useRSVPData();
-  let [state, setState] = useState<
-    { state: "details" } | { state: "confirm"; token: string }
-  >({ state: "details" });
-  let { name, setName } = useRSVPNameState();
-  const [formState, setFormState] = useState({
-    phone: "",
-    confirmationCode: "",
-  });
-
-  let submit = async (
-    token: Awaited<ReturnType<typeof confirmPhoneAuthToken>>,
-  ) => {
-    try {
-      await submitRSVP({
-        status,
-        name: name,
-        entity: entityID,
-      });
-    } catch (e) {
-      //handle failed confirm
-      return false;
-    }
-
-    mutate({
-      authToken: token,
-      rsvps: [
-        ...(data?.rsvps || []).filter((r) => r.entity !== entityID),
-        {
-          name: name,
-          status,
-          entity: entityID,
-          phone_number: token.phone_number,
-        },
-      ],
-    });
-    return true;
-  };
-  return state.state === "details" ? (
-    <div className="rsvpForm flex flex-col gap-2">
-      <div className="rsvpInputs flex sm:flex-row flex-col gap-2 w-fit place-self-center ">
-        <label
-          htmlFor="rsvp-name-input"
-          className={`
-            rsvpNameInput input-with-border basis-1/3 h-fit
-            flex flex-col ${focusWithinStyles}`}
-        >
-          <div className="text-xs font-bold italic text-tertiary">name</div>
-          <input
-            autoFocus
-            id="rsvp-name-input"
-            placeholder="..."
-            className=" bg-transparent disabled:text-tertiary w-full appearance-none focus:outline-0"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-          />
-        </label>
-        <div
-          className={`rsvpPhoneInputWrapper  relative flex flex-col gap-0.5 w-full basis-2/3`}
-        >
-          <label
-            htmlFor="rsvp-phone-input"
-            className={`
-              rsvpPhoneInput input-with-border
-              flex flex-col ${focusWithinStyles}
-              ${!!data?.authToken?.phone_number && "bg-border-light border-border-light text-tertiary"}`}
-          >
-            <div className=" text-xs font-bold italic text-tertiary">
-              phone number
-            </div>
-            <div className="flex gap-2 ">
-              <div className="w-max shrink-0">🇺🇸 +1</div>
-              <Separator />
-
-              <input
-                id="rsvp-phone-input"
-                placeholder="0000000000"
-                className=" bg-transparent disabled:text-tertiary w-full appearance-none focus:outline-0"
-                disabled={!!data?.authToken?.phone_number}
-                value={data?.authToken?.phone_number || formState.phone}
-                onChange={(e) =>
-                  setFormState((state) => ({ ...state, phone: e.target.value }))
-                }
-              />
-            </div>
-          </label>
-          <div className="text-xs italic text-tertiary leading-tight">
-            Non-US numbers will receive messages through{" "}
-            <strong>WhatsApp</strong>
-          </div>
-        </div>
-      </div>
-
-      <hr className="border-border" />
-      <div className="flex flex-row gap-2 w-full items-center justify-end">
-        <ConsentPopover checked={checked} setChecked={setChecked} />
-        <ButtonPrimary
-          disabled={!checked}
-          className="place-self-end"
-          onClick={async () => {
-            if (data?.authToken) {
-              submit(data.authToken);
-            } else {
-              let tokenId = await createPhoneAuthToken("+1" + formState.phone);
-              setState({ state: "confirm", token: tokenId });
-            }
-          }}
-        >
-          RSVP as {status === "GOING" ? "Going" : "Maybe"}
-        </ButtonPrimary>
-      </div>
-    </div>
-  ) : (
-    <div className="flex flex-col gap-2">
-      <label className="rsvpNameInput relative w-full flex flex-col gap-0.5">
-        <div className="absolute top-0.5 left-[6px] text-xs font-bold italic text-tertiary">
-          confirmation code
-        </div>
-        <input
-          autoFocus
-          placeholder="000000"
-          className="input-with-border !pt-5 w-full "
-          value={formState.confirmationCode || ""}
-          onChange={(e) =>
-            setFormState((state) => ({
-              ...state,
-              confirmationCode: e.target.value,
-            }))
-          }
-        />
-        <div className="text-xs italic text-tertiary leading-tight">
-          we texted a confirmation code to your phone number!
-        </div>
-      </label>
-      <hr className="border-border" />
-
-      <ButtonPrimary
-        className="place-self-end"
-        onMouseDown={async (e) => {
-          try {
-            let token = await confirmPhoneAuthToken(
-              state.token,
-              formState.confirmationCode,
-            );
-            submit(token);
-          } catch (error) {
-            smoker({
-              alignOnMobile: "left",
-              error: true,
-              text: "invalid code!",
-              position: { x: e.clientX, y: e.clientY },
-            });
-            return;
-          }
-        }}
-      >
-        Confirm
-      </ButtonPrimary>
-    </div>
-  );
-}
-
-const ConsentPopover = (props: {
-  checked: boolean;
-  setChecked: (checked: boolean) => void;
-}) => {
-  return (
-    <Checkbox
-      checked={props.checked}
-      onChange={() => {
-        props.setChecked(!props.checked);
-      }}
-    >
-      <div className="text-sm text-secondary">
-        Clicking RSVP means that you are consenting to receive SMS messages from
-        us!
-      </div>
-    </Checkbox>
-  );
-};
