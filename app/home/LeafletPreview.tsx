@@ -24,6 +24,7 @@ import { TemplateSmall } from "components/Icons";
 import { theme } from "tailwind.config";
 import { useTemplateState } from "./CreateNewButton";
 import styles from "./LeafletPreview.module.css";
+import { useRouter } from "next/navigation";
 
 export const LeafletPreview = (props: {
   index: number;
@@ -40,6 +41,7 @@ export const LeafletPreview = (props: {
     props.leaflet_id;
   let firstPage = useEntity(root, "root/page")[0];
   let page = firstPage?.data.value || root;
+  let router = useRouter();
 
   return (
     <div className="relative max-h-40 h-40">
@@ -61,7 +63,10 @@ export const LeafletPreview = (props: {
                 </div>
               </ThemeBackgroundProvider>
               <Link
-                href={"/" + props.token.id}
+                onHoverStart={() => {
+                  router.prefetch(`/${props.token.id}`);
+                }}
+                href={`/${props.token.id}`}
                 className={`no-underline hover:no-underline text-primary absolute inset-0 w-full h-full`}
               ></Link>
             </div>
