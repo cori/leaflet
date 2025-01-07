@@ -1,15 +1,8 @@
 "use client";
 import { Database } from "supabase/database.types";
-import {
-  BlockProps,
-  BaseBlock,
-  ListMarker,
-  Block,
-} from "components/Blocks/Block";
+import { BlockProps } from "components/Blocks/Block";
 import { createContext, useContext, useState } from "react";
 import { submitRSVP } from "actions/phone_rsvp_to_event";
-import { createPhoneAuthToken } from "actions/phone_auth/request_phone_auth_token";
-import { confirmPhoneAuthToken } from "actions/phone_auth/confirm_phone_auth_token";
 import { useRSVPData } from "src/hooks/useRSVPData";
 import { useEntitySetContext } from "components/EntitySetProvider";
 import {
@@ -17,21 +10,16 @@ import {
   ButtonSecondary,
   ButtonTertiary,
 } from "components/Buttons";
-import { InfoSmall, UpdateSmall } from "components/Icons";
+import { UpdateSmall } from "components/Icons";
 import { Popover } from "components/Popover";
 import { create } from "zustand";
 import { combine, createJSONStorage, persist } from "zustand/middleware";
 import { useUIState } from "src/useUIState";
 import { Separator } from "components/Layout";
 import { theme } from "tailwind.config";
-import { useSmoker, useToaster } from "components/Toast";
+import { useToaster } from "components/Toast";
 import { sendUpdateToRSVPS } from "actions/sendUpdateToRSVPS";
 import { useReplicache } from "src/replicache";
-import { permission_tokens } from "drizzle/schema";
-import { setConfig } from "next/config";
-import { Checkbox } from "components/Checkbox";
-import * as Select from "@radix-ui/react-select";
-import { countryCodes } from "src/constants/countryCodes";
 import { ContactDetailsForm } from "./ContactDetailsForm";
 
 export type RSVP_Status = Database["public"]["Enums"]["rsvp_status"];
