@@ -59,6 +59,7 @@ function RSVPForm(props: { entityID: string }) {
     (rsvp) =>
       data.authToken &&
       rsvp.entity === props.entityID &&
+      data.authToken.country_code === rsvp.country_code &&
       data.authToken.phone_number === rsvp.phone_number,
   )?.status;
 

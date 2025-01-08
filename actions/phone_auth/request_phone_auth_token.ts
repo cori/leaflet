@@ -21,7 +21,13 @@ async function sendAuthCode(phoneNumber: string, code: string) {
   console.log(message.body);
 }
 
-export async function createPhoneAuthToken(phoneNumber: string) {
+export async function createPhoneAuthToken({
+  phone_number,
+  country_code,
+}: {
+  phone_number: string;
+  country_code: string;
+}) {
   const client = postgres(process.env.DB_URL as string, { idle_timeout: 5 });
   const db = drizzle(client);
 
@@ -30,7 +36,8 @@ export async function createPhoneAuthToken(phoneNumber: string) {
   const [token] = await db
     .insert(phone_number_auth_tokens)
     .values({
-      phone_number: phoneNumber,
+      phone_number,
+      country_code,
       confirmation_code: code,
       confirmed: false,
     })
@@ -38,7 +45,7 @@ export async function createPhoneAuthToken(phoneNumber: string) {
       id: phone_number_auth_tokens.id,
     });
 
-  await sendAuthCode(phoneNumber, code);
+  await sendAuthCode(`+${country_code}${phone_number}`, code);
 
   client.end();
   return token.id;

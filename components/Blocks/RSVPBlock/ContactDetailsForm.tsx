@@ -33,11 +33,12 @@ export function ContactDetailsForm({
   let { name, setName } = useRSVPNameState();
   let ipLocation = useContext(IPLocationContext) || "US";
   const [formState, setFormState] = useState({
-    countryCode:
+    country_code:
       countryCodes.find((c) => c[1].toUpperCase() === ipLocation)?.[2] || "1",
-    phone: "",
+    phone_number: "",
     confirmationCode: "",
   });
+  let [enterNewNumber, setEnterNewNumber] = useState(false);
 
   let submit = async (
     token: Awaited<ReturnType<typeof confirmPhoneAuthToken>>,
@@ -46,7 +47,6 @@ export function ContactDetailsForm({
       await submitRSVP({
         status,
         name: name,
-
         entity: entityID,
       });
     } catch (e) {
@@ -63,6 +63,7 @@ export function ContactDetailsForm({
           status,
           entity: entityID,
           phone_number: token.phone_number,
+          country_code: token.country_code,
         },
       ],
     });
@@ -108,16 +109,17 @@ export function ContactDetailsForm({
                     if (e.key === "Backspace" && !e.currentTarget.value)
                       e.preventDefault();
                   }}
+                  disabled={!!data?.authToken?.phone_number}
                   className="w-10 bg-transparent"
                   placeholder="1"
                   maxLength={4}
                   inputMode="numeric"
                   pattern="[0-9]*"
-                  value={formState.countryCode}
+                  value={formState.country_code}
                   onChange={(e) =>
                     setFormState((s) => ({
                       ...s,
-                      countryCode: e.target.value.replace(/[^0-9]/g, ""),
+                      country_code: e.target.value.replace(/[^0-9]/g, ""),
                     }))
                   }
                 />
@@ -135,11 +137,11 @@ export function ContactDetailsForm({
                   if (e.key === "Backspace" && !e.currentTarget.value)
                     e.preventDefault();
                 }}
-                value={data?.authToken?.phone_number || formState.phone}
+                value={data?.authToken?.phone_number || formState.phone_number}
                 onChange={(e) =>
                   setFormState((state) => ({
                     ...state,
-                    phone: e.target.value.replace(/[^0-9]/g, ""),
+                    phone_number: e.target.value.replace(/[^0-9]/g, ""),
                   }))
                 }
               />
@@ -156,15 +158,19 @@ export function ContactDetailsForm({
       <div className="flex flex-row gap-2 w-full items-center justify-end">
         <ConsentPopover checked={checked} setChecked={setChecked} />
         <ButtonPrimary
-          disabled={!checked || !formState.phone || !formState.countryCode}
+          disabled={
+            (!data?.authToken?.phone_number &&
+              (!checked ||
+                !formState.phone_number ||
+                !formState.country_code)) ||
+            (!!data?.authToken?.phone_number && !checked)
+          }
           className="place-self-end"
           onClick={async () => {
             if (data?.authToken) {
               submit(data.authToken);
             } else {
-              let tokenId = await createPhoneAuthToken(
-                `+${formState.countryCode}${formState.phone}`,
-              );
+              let tokenId = await createPhoneAuthToken(formState);
               setState({ state: "confirm", token: tokenId });
             }
           }}

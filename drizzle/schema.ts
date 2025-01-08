@@ -1,4 +1,4 @@
-import { pgTable, foreignKey, pgEnum, uuid, timestamp, text, jsonb, bigint, boolean, uniqueIndex, primaryKey } from "drizzle-orm/pg-core"
+import { pgTable, foreignKey, pgEnum, uuid, text, jsonb, timestamp, bigint, boolean, uniqueIndex, primaryKey } from "drizzle-orm/pg-core"
   import { sql } from "drizzle-orm"
 
 export const aal_level = pgEnum("aal_level", ['aal1', 'aal2', 'aal3'])
@@ -13,12 +13,6 @@ export const rsvp_status = pgEnum("rsvp_status", ['GOING', 'NOT_GOING', 'MAYBE']
 export const action = pgEnum("action", ['INSERT', 'UPDATE', 'DELETE', 'TRUNCATE', 'ERROR'])
 export const equality_op = pgEnum("equality_op", ['eq', 'neq', 'lt', 'lte', 'gt', 'gte', 'in'])
 
-
-export const entities = pgTable("entities", {
-	id: uuid("id").primaryKey().notNull(),
-	created_at: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
-	set: uuid("set").notNull().references(() => entity_sets.id, { onDelete: "cascade", onUpdate: "cascade" } ),
-});
 
 export const facts = pgTable("facts", {
 	id: uuid("id").primaryKey().notNull(),
@@ -36,6 +30,12 @@ export const replicache_clients = pgTable("replicache_clients", {
 	client_group: text("client_group").notNull(),
 	// You can use { mode: "bigint" } if numbers are exceeding js number limitations
 	last_mutation: bigint("last_mutation", { mode: "number" }).notNull(),
+});
+
+export const entities = pgTable("entities", {
+	id: uuid("id").primaryKey().notNull(),
+	created_at: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
+	set: uuid("set").notNull().references(() => entity_sets.id, { onDelete: "cascade", onUpdate: "cascade" } ),
 });
 
 export const entity_sets = pgTable("entity_sets", {
@@ -65,12 +65,22 @@ export const email_subscriptions_to_entity = pgTable("email_subscriptions_to_ent
 	confirmation_code: text("confirmation_code").notNull(),
 });
 
+export const email_auth_tokens = pgTable("email_auth_tokens", {
+	id: uuid("id").defaultRandom().primaryKey().notNull(),
+	created_at: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
+	confirmed: boolean("confirmed").default(false).notNull(),
+	email: text("email").notNull(),
+	confirmation_code: text("confirmation_code").notNull(),
+	identity: uuid("identity").references(() => identities.id, { onDelete: "cascade", onUpdate: "cascade" } ),
+});
+
 export const phone_number_auth_tokens = pgTable("phone_number_auth_tokens", {
 	id: uuid("id").defaultRandom().primaryKey().notNull(),
 	created_at: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
 	confirmed: boolean("confirmed").default(false).notNull(),
 	confirmation_code: text("confirmation_code").notNull(),
 	phone_number: text("phone_number").notNull(),
+	country_code: text("country_code").notNull(),
 });
 
 export const phone_rsvps_to_entity = pgTable("phone_rsvps_to_entity", {
@@ -80,20 +90,12 @@ export const phone_rsvps_to_entity = pgTable("phone_rsvps_to_entity", {
 	id: uuid("id").defaultRandom().primaryKey().notNull(),
 	entity: uuid("entity").notNull().references(() => entities.id, { onDelete: "cascade", onUpdate: "cascade" } ),
 	name: text("name").default('').notNull(),
+	country_code: text("country_code").notNull(),
 },
 (table) => {
 	return {
 		unique_phone_number_entities: uniqueIndex("unique_phone_number_entities").on(table.phone_number, table.entity),
 	}
-});
-
-export const email_auth_tokens = pgTable("email_auth_tokens", {
-	id: uuid("id").defaultRandom().primaryKey().notNull(),
-	created_at: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
-	confirmed: boolean("confirmed").default(false).notNull(),
-	email: text("email").notNull(),
-	confirmation_code: text("confirmation_code").notNull(),
-	identity: uuid("identity").references(() => identities.id, { onDelete: "cascade", onUpdate: "cascade" } ),
 });
 
 export const permission_token_on_homepage = pgTable("permission_token_on_homepage", {

@@ -9,11 +9,9 @@ import {
   phone_rsvps_to_entity,
 } from "drizzle/schema";
 import { cookies } from "next/headers";
-import { Database } from "supabase/database.types";
 
 export async function getRSVPData(entity_sets: string[]) {
-  const token = cookies().get("auth_token");
-
+  const token = cookies().get("phone_auth_token");
   if (!token) {
     return null;
   }
@@ -35,14 +33,24 @@ export async function getRSVPData(entity_sets: string[]) {
   client.end();
   return {
     authToken,
-    rsvps: rsvps.map((rsvp) => ({
-      name: rsvp.phone_rsvps_to_entity.name,
-      phone_number:
-        rsvp.phone_rsvps_to_entity.phone_number === authToken?.phone_number
-          ? authToken.phone_number
-          : null,
-      entity: rsvp.entities.id,
-      status: rsvp.phone_rsvps_to_entity.status,
-    })),
+    rsvps: rsvps.map((rsvp) => {
+      if (
+        rsvp.phone_rsvps_to_entity.phone_number === authToken?.phone_number &&
+        rsvp.phone_rsvps_to_entity.country_code === authToken.country_code
+      )
+        return {
+          phone_number: rsvp.phone_rsvps_to_entity.phone_number,
+          country_code: rsvp.phone_rsvps_to_entity.country_code,
+          name: rsvp.phone_rsvps_to_entity.name,
+          entity: rsvp.entities.id,
+          status: rsvp.phone_rsvps_to_entity.status,
+        };
+      else
+        return {
+          name: rsvp.phone_rsvps_to_entity.name,
+          entity: rsvp.entities.id,
+          status: rsvp.phone_rsvps_to_entity.status,
+        };
+    }),
   };
 }

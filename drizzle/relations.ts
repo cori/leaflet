@@ -1,12 +1,19 @@
 import { relations } from "drizzle-orm/relations";
-import { entity_sets, entities, facts, permission_tokens, identities, email_subscriptions_to_entity, phone_rsvps_to_entity, email_auth_tokens, permission_token_on_homepage, permission_token_rights } from "./schema";
+import { entities, facts, entity_sets, permission_tokens, identities, email_subscriptions_to_entity, email_auth_tokens, phone_rsvps_to_entity, permission_token_on_homepage, permission_token_rights } from "./schema";
+
+export const factsRelations = relations(facts, ({one}) => ({
+	entity: one(entities, {
+		fields: [facts.entity],
+		references: [entities.id]
+	}),
+}));
 
 export const entitiesRelations = relations(entities, ({one, many}) => ({
+	facts: many(facts),
 	entity_set: one(entity_sets, {
 		fields: [entities.set],
 		references: [entity_sets.id]
 	}),
-	facts: many(facts),
 	permission_tokens: many(permission_tokens),
 	email_subscriptions_to_entities: many(email_subscriptions_to_entity),
 	phone_rsvps_to_entities: many(phone_rsvps_to_entity),
@@ -15,13 +22,6 @@ export const entitiesRelations = relations(entities, ({one, many}) => ({
 export const entity_setsRelations = relations(entity_sets, ({many}) => ({
 	entities: many(entities),
 	permission_token_rights: many(permission_token_rights),
-}));
-
-export const factsRelations = relations(facts, ({one}) => ({
-	entity: one(entities, {
-		fields: [facts.entity],
-		references: [entities.id]
-	}),
 }));
 
 export const permission_tokensRelations = relations(permission_tokens, ({one, many}) => ({
@@ -55,17 +55,17 @@ export const email_subscriptions_to_entityRelations = relations(email_subscripti
 	}),
 }));
 
-export const phone_rsvps_to_entityRelations = relations(phone_rsvps_to_entity, ({one}) => ({
-	entity: one(entities, {
-		fields: [phone_rsvps_to_entity.entity],
-		references: [entities.id]
-	}),
-}));
-
 export const email_auth_tokensRelations = relations(email_auth_tokens, ({one}) => ({
 	identity: one(identities, {
 		fields: [email_auth_tokens.identity],
 		references: [identities.id]
+	}),
+}));
+
+export const phone_rsvps_to_entityRelations = relations(phone_rsvps_to_entity, ({one}) => ({
+	entity: one(entities, {
+		fields: [phone_rsvps_to_entity.entity],
+		references: [entities.id]
 	}),
 }));
 

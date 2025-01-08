@@ -21,7 +21,7 @@ export async function submitRSVP(args: {
 }) {
   const client = postgres(process.env.DB_URL as string, { idle_timeout: 5 });
   const db = drizzle(client);
-  let token = cookies().get("auth_token");
+  let token = cookies().get("phone_auth_token");
   if (!token) throw new Error("No auth token found");
 
   let [auth_token] = await db
@@ -39,6 +39,7 @@ export async function submitRSVP(args: {
           status: args.status,
           entity: args.entity,
           phone_number: auth_token.phone_number,
+          country_code: auth_token.country_code,
           name: args.name,
         },
       ])

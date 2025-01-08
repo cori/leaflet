@@ -327,6 +327,7 @@ export type Database = {
         Row: {
           confirmation_code: string
           confirmed: boolean
+          country_code: string
           created_at: string
           id: string
           phone_number: string
@@ -334,6 +335,7 @@ export type Database = {
         Insert: {
           confirmation_code: string
           confirmed?: boolean
+          country_code: string
           created_at?: string
           id?: string
           phone_number: string
@@ -341,6 +343,7 @@ export type Database = {
         Update: {
           confirmation_code?: string
           confirmed?: boolean
+          country_code?: string
           created_at?: string
           id?: string
           phone_number?: string
@@ -349,6 +352,7 @@ export type Database = {
       }
       phone_rsvps_to_entity: {
         Row: {
+          country_code: string
           created_at: string
           entity: string
           id: string
@@ -357,6 +361,7 @@ export type Database = {
           status: Database["public"]["Enums"]["rsvp_status"]
         }
         Insert: {
+          country_code: string
           created_at?: string
           entity: string
           id?: string
@@ -365,6 +370,7 @@ export type Database = {
           status: Database["public"]["Enums"]["rsvp_status"]
         }
         Update: {
+          country_code?: string
           created_at?: string
           entity?: string
           id?: string

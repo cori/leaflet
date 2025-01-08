@@ -5,7 +5,8 @@ create table "public"."phone_number_auth_tokens" (
     "created_at" timestamp with time zone not null default now(),
     "confirmed" boolean not null default false,
     "confirmation_code" text not null,
-    "phone_number" text not null
+    "phone_number" text not null,
+    "country_code" text not null
 );
 
 
@@ -14,6 +15,7 @@ alter table "public"."phone_number_auth_tokens" enable row level security;
 create table "public"."phone_rsvps_to_entity" (
     "created_at" timestamp with time zone not null default now(),
     "phone_number" text not null,
+    "country_code" text not null,
     "status" rsvp_status not null,
     "id" uuid not null default gen_random_uuid(),
     "entity" uuid not null,
