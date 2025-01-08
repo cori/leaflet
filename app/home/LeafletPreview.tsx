@@ -62,13 +62,7 @@ export const LeafletPreview = (props: {
                   </div>
                 </div>
               </ThemeBackgroundProvider>
-              <Link
-                onMouseEnter={() => {
-                  router.prefetch(`/${props.token.id}`);
-                }}
-                href={`/${props.token.id}`}
-                className={`no-underline hover:no-underline text-primary absolute inset-0 w-full h-full`}
-              />
+              <LeafletPreviewLink id={props.token.id} />
             </div>
           ) : (
             <LeafletAreYouSure token={props.token} setState={setState} />
@@ -207,5 +201,18 @@ const LeafletTemplateIndicator = (props: { isTemplate: boolean }) => {
     <div className="absolute -top-3 right-1">
       <TemplateSmall fill={theme.colors["bg-page"]} />
     </div>
+  );
+};
+
+const LeafletPreviewLink = (props: { id: string }) => {
+  let [prefetch, setPrefetch] = useState(false);
+  return (
+    <Link
+      onMouseEnter={() => setPrefetch(true)}
+      onPointerDown={() => setPrefetch(true)}
+      prefetch={prefetch}
+      href={`/${props.id}`}
+      className={`no-underline hover:no-underline text-primary absolute inset-0 w-full h-full`}
+    />
   );
 };
