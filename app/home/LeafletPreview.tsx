@@ -5,7 +5,6 @@ import {
   ThemeProvider,
 } from "components/ThemeManager/ThemeProvider";
 import { useEffect, useRef, useState } from "react";
-import { Link } from "react-aria-components";
 import { useBlocks } from "src/hooks/queries/useBlocks";
 import {
   PermissionToken,
@@ -25,6 +24,7 @@ import { theme } from "tailwind.config";
 import { useTemplateState } from "./CreateNewButton";
 import styles from "./LeafletPreview.module.css";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 export const LeafletPreview = (props: {
   index: number;
@@ -63,12 +63,12 @@ export const LeafletPreview = (props: {
                 </div>
               </ThemeBackgroundProvider>
               <Link
-                onHoverStart={() => {
+                onMouseEnter={() => {
                   router.prefetch(`/${props.token.id}`);
                 }}
                 href={`/${props.token.id}`}
                 className={`no-underline hover:no-underline text-primary absolute inset-0 w-full h-full`}
-              ></Link>
+              />
             </div>
           ) : (
             <LeafletAreYouSure token={props.token} setState={setState} />
