@@ -206,7 +206,7 @@ export function BaseTextBlock(props: BlockProps & { className?: string }) {
     center: "text-center",
   }[alignment];
 
-  let [value, factID] = useYJSValue(props.entityID);
+  let [value] = useYJSValue(props.entityID);
 
   let editorState = useEditorStates(
     (s) => s.editorStates[props.entityID],
@@ -237,7 +237,7 @@ export function BaseTextBlock(props: BlockProps & { className?: string }) {
       }));
     };
   }, [props.entityID]);
-  let handlePaste = useHandlePaste(props.entityID, propsRef, factID);
+  let handlePaste = useHandlePaste(props.entityID, propsRef);
   let handleClickOn = useCallback<
     Exclude<Parameters<typeof ProseMirror>[0]["handleClickOn"], undefined>
   >((view, _pos, node, _nodePos, _event, direct) => {
@@ -373,12 +373,6 @@ export function BaseTextBlock(props: BlockProps & { className?: string }) {
             searchValue={editorState.doc.textContent.slice(1)}
           />
         )}
-        {editorState.doc.textContent.startsWith("/") && selected && (
-          <BlockCommandBar
-            props={props}
-            searchValue={editorState.doc.textContent.slice(1)}
-          />
-        )}
       </div>
       <SyncView entityID={props.entityID} parentID={props.parent} />
       <CommandHandler entityID={props.entityID} />
@@ -475,15 +469,38 @@ let SyncView = (props: { entityID: string; parentID: string }) => {
 //I need to get *and* set the value to zustand?
 // This will mean that the value is undefined for a second... Maybe I could use a ref to figure that out?
 function useYJSValue(entityID: string) {
-  const [ydoc] = useState(new Y.Doc());
-  const docStateFromReplicache = useEntity(entityID, "block/text");
-  let rep = useReplicache();
+  const [ydoc] = useState(() => new Y.Doc());
   const yText = ydoc.getXmlFragment("prosemirror");
-
-  if (docStateFromReplicache) {
-    const update = base64.toByteArray(docStateFromReplicache.data.value);
-    Y.applyUpdate(ydoc, update);
-  }
+  let rep = useReplicache();
+  useEffect(() => {
+    if (!rep.rep) return;
+    let fallback = rep.initialFacts.filter(
+      (f) => f.entity === entityID && f.attribute === "block/text",
+    ) as Fact<"block/text">[];
+    if (fallback[0]) {
+      const update = base64.toByteArray(fallback[0].data.value);
+      Y.applyUpdate(ydoc, update);
+    }
+    return rep.rep?.subscribe(
+      async (tx) => {
+        return (
+          await tx
+            .scan<
+              Fact<"block/text">
+            >({ indexName: "eav", prefix: `${entityID}-block/text` })
+            .toArray()
+        ).filter((f) => f.attribute === "block/text");
+      },
+      {
+        onData: (data) => {
+          if (data[0]) {
+            const update = base64.toByteArray(data[0].data.value);
+            Y.applyUpdate(ydoc, update);
+          }
+        },
+      },
+    );
+  }, [rep, entityID]);
 
   useEffect(() => {
     if (!rep.rep) return;
@@ -491,6 +508,7 @@ function useYJSValue(entityID: string) {
     const f = async () => {
       const updateReplicache = async () => {
         const update = Y.encodeStateAsUpdate(ydoc);
+        console.log("updating replicache?");
         await rep.rep?.mutate.assertFact({
           entity: entityID,
           attribute: "block/text",
@@ -512,5 +530,5 @@ function useYJSValue(entityID: string) {
       yText.unobserveDeep(f);
     };
   }, [yText, entityID, rep, ydoc]);
-  return [yText, docStateFromReplicache?.id] as const;
+  return [yText] as const;
 }
