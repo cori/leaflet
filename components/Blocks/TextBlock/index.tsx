@@ -32,7 +32,6 @@ import { MarkType, DOMParser as ProsemirrorDOMParser } from "prosemirror-model";
 import { useAppEventListener } from "src/eventBus";
 import { addLinkBlock } from "src/utils/addLinkBlock";
 import { BlockCommandBar } from "components/Blocks/BlockCommandBar";
-import { setEditorState, useEditorStates } from "src/state/useEditorState";
 import { isIOS } from "@react-aria/utils";
 import { useIsMobile } from "src/hooks/isMobile";
 import { setMark } from "src/utils/prosemirror/setMark";
@@ -42,6 +41,7 @@ import { useHandlePaste } from "./useHandlePaste";
 import { highlightSelectionPlugin } from "./plugins";
 import { inputrules } from "./inputRules";
 import { AddTiny, MoreOptionsTiny } from "components/Icons";
+import { useEditorStates } from "src/state/useEditorState";
 
 export function TextBlock(
   props: BlockProps & { className?: string; preview?: boolean },
@@ -208,35 +208,20 @@ export function BaseTextBlock(props: BlockProps & { className?: string }) {
 
   let [value] = useYJSValue(props.entityID);
 
-  let editorState = useEditorStates(
-    (s) => s.editorStates[props.entityID],
-  )?.editor;
-  useEffect(() => {
-    if (!editorState) {
-      let km = TextBlockKeymap(propsRef, repRef);
-      setEditorState(props.entityID, {
-        keymap: km,
-        editor: EditorState.create({
-          schema,
-          plugins: [
-            ySyncPlugin(value),
-            keymap(km),
-            inputrules(propsRef, repRef),
-            keymap(baseKeymap),
-            highlightSelectionPlugin,
-          ],
-        }),
-      });
-    }
-  }, [editorState, props.entityID, props.parent, value]);
-  useEffect(() => {
-    return () => {
-      useEditorStates.setState((s) => ({
-        ...s,
-        editorStates: { ...s.editorStates, [props.entityID]: undefined },
-      }));
-    };
-  }, [props.entityID]);
+  let [editorState, setEditorState] = useState(() => {
+    let km = TextBlockKeymap(propsRef, repRef);
+    return EditorState.create({
+      schema,
+      plugins: [
+        ySyncPlugin(value),
+        keymap(km),
+        inputrules(propsRef, repRef),
+        keymap(baseKeymap),
+        highlightSelectionPlugin,
+      ],
+    });
+  });
+
   let handlePaste = useHandlePaste(props.entityID, propsRef);
   let handleClickOn = useCallback<
     Exclude<Parameters<typeof ProseMirror>[0]["handleClickOn"], undefined>
@@ -252,18 +237,8 @@ export function BaseTextBlock(props: BlockProps & { className?: string }) {
   }, []);
   let dispatchTransaction = useCallback(
     (tr: Transaction) => {
-      useEditorStates.setState((s) => {
-        let existingState = s.editorStates[props.entityID];
-        if (!existingState) return s;
-        return {
-          editorStates: {
-            ...s.editorStates,
-            [props.entityID]: {
-              ...existingState,
-              editor: existingState.editor.apply(tr),
-            },
-          },
-        };
+      setEditorState((s) => {
+        return s.apply(tr);
       });
     },
     [props.entityID],
@@ -340,23 +315,10 @@ export function BaseTextBlock(props: BlockProps & { className?: string }) {
             className={`absolute top-0.5 right-0 w-fit h-5 hover:text-accent-contrast font-bold  rounded-md  text-sm text-border ${props.pageType === "canvas" && "mr-[6px]"}`}
             onMouseDown={(e) => {
               e.preventDefault();
-              let editor =
-                useEditorStates.getState().editorStates[props.entityID];
-
-              let editorState = editor?.editor;
               if (editorState) {
-                editor?.view?.focus();
                 let tr = editorState.tr.insertText("/", 1);
                 tr.setSelection(TextSelection.create(tr.doc, 2));
-                useEditorStates.setState((s) => ({
-                  editorStates: {
-                    ...s.editorStates,
-                    [props.entityID]: {
-                      ...s.editorStates[props.entityID]!,
-                      editor: editorState!.apply(tr),
-                    },
-                  },
-                }));
+                setEditorState((s) => s.apply(tr));
               }
             }}
           >
@@ -448,21 +410,6 @@ let SyncView = (props: { entityID: string; parentID: string }) => {
       }
     }, 800);
   });
-  useEditorEffect(
-    (view) => {
-      useEditorStates.setState((s) => {
-        let existingEditor = s.editorStates[props.entityID];
-        if (!existingEditor) return s;
-        return {
-          editorStates: {
-            ...s.editorStates,
-            [props.entityID]: { ...existingEditor, view },
-          },
-        };
-      });
-    },
-    [props.entityID],
-  );
   return null;
 };
 
