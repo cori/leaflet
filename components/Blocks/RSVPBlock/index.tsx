@@ -66,6 +66,7 @@ function RSVPForm(props: { entityID: string }) {
   let setStatus = (status: RSVP_Status) => {
     setState({ status, state: "contact_details" });
   };
+  let [editing, setEditting] = useState(false);
 
   let rsvpStatus = data?.rsvps?.find(
     (rsvp) =>
@@ -76,12 +77,18 @@ function RSVPForm(props: { entityID: string }) {
   )?.status;
 
   // IF YOU HAVE ALREADY RSVP'D
-  if (rsvpStatus)
+  if (rsvpStatus && !editing)
     return (
       <>
         {permissions.write && <SendUpdateButton entityID={props.entityID} />}
 
-        <YourRSVPStatus entityID={props.entityID} />
+        <YourRSVPStatus
+          entityID={props.entityID}
+          setEditting={() => {
+            setStatus(rsvpStatus);
+            setEditting(true);
+          }}
+        />
         <Attendees entityID={props.entityID} />
       </>
     );
@@ -99,11 +106,17 @@ function RSVPForm(props: { entityID: string }) {
   // IF YOU ARE CURRENTLY CONFIRMING YOUR CONTACT DETAILS
   if (state.state === "contact_details")
     return (
-      <ContactDetailsForm
-        status={state.status}
-        setState={setState}
-        entityID={props.entityID}
-      />
+      <>
+        <RSVPButtons setStatus={setStatus} />
+        <ContactDetailsForm
+          status={state.status}
+          setState={(newState) => {
+            if (newState.state === "default" && editing) setEditting(false);
+            setState(newState);
+          }}
+          entityID={props.entityID}
+        />
+      </>
     );
 }
 
@@ -133,17 +146,22 @@ const RSVPButtons = (props: { setStatus: (status: RSVP_Status) => void }) => {
   );
 };
 
-function YourRSVPStatus(props: { entityID: string; compact?: boolean }) {
+function YourRSVPStatus(props: {
+  entityID: string;
+  compact?: boolean;
+  setEditting: (e: boolean) => void;
+}) {
   let { data, mutate } = useRSVPData();
   let { name } = useRSVPNameState();
   let toaster = useToaster();
 
-  let rsvpStatus = data?.rsvps?.find(
+  let existingRSVP = data?.rsvps?.find(
     (rsvp) =>
       data.authToken &&
       rsvp.entity === props.entityID &&
       data.authToken.phone_number === rsvp.phone_number,
-  )?.status;
+  );
+  let rsvpStatus = existingRSVP?.status;
 
   let updateStatus = async (status: RSVP_Status) => {
     if (!data?.authToken) return;
@@ -151,6 +169,7 @@ function YourRSVPStatus(props: { entityID: string; compact?: boolean }) {
       status,
       name: name,
       entity: props.entityID,
+      plus_ones: existingRSVP?.plus_ones || 0,
     });
 
     mutate({
@@ -163,6 +182,7 @@ function YourRSVPStatus(props: { entityID: string; compact?: boolean }) {
           entity: props.entityID,
           phone_number: data.authToken.phone_number,
           country_code: data.authToken.country_code,
+          plus_ones: existingRSVP?.plus_ones || 0,
         },
       ],
     });
@@ -187,59 +207,7 @@ function YourRSVPStatus(props: { entityID: string; compact?: boolean }) {
               MAYBE: "You're a Maybe",
               NOT_GOING: "Can't Make It",
             }[rsvpStatus]}
-        </div>
-        <div className="flex gap-4 place-items-center justify-center">
-          {rsvpStatus !== "GOING" && (
-            <ButtonSecondary
-              className={props.compact ? "text-sm  !font-normal" : ""}
-              compact
-              onClick={() => {
-                updateStatus("GOING");
-                toaster({
-                  content: (
-                    <div className="font-bold">Yay! You&apos;re Going!</div>
-                  ),
-                  type: "success",
-                });
-              }}
-            >
-              Going
-            </ButtonSecondary>
-          )}
-          {rsvpStatus !== "MAYBE" && (
-            <ButtonSecondary
-              className={props.compact ? "text-sm  !font-normal" : ""}
-              compact
-              onClick={() => {
-                updateStatus("MAYBE");
-                toaster({
-                  content: <div className="font-bold">You&apos;re a Maybe</div>,
-                  type: "success",
-                });
-              }}
-            >
-              Maybe
-            </ButtonSecondary>
-          )}
-          {rsvpStatus !== "NOT_GOING" && (
-            <ButtonSecondary
-              compact
-              className={props.compact ? "text-sm  !font-normal" : ""}
-              onClick={() => {
-                updateStatus("NOT_GOING");
-                toaster({
-                  content: (
-                    <div className="font-bold">
-                      Sorry you can&apos;t make it D:
-                    </div>
-                  ),
-                  type: "success",
-                });
-              }}
-            >
-              Can&apos;t Go
-            </ButtonSecondary>
-          )}
+          <button onClick={() => props.setEditting(true)}>edit?</button>
         </div>
       </div>
     </div>
@@ -278,33 +246,34 @@ function Attendees(props: { entityID: string; className?: string }) {
       {going.length === 0 && maybe.length === 0 && notGoing.length === 0 && (
         <div className="text-tertiary italic">No RSVPs yet</div>
       )}
-      {going.length > 0 && (
-        <div className="flex flex-col gap-0.5">
-          <div className="font-bold text-tertiary">Going ({going.length})</div>
-          {going.map((rsvp) => (
-            <div key={rsvp.phone_number}>{rsvp.name}</div>
-          ))}
-        </div>
-      )}
-      {maybe.length > 0 && (
-        <div className="flex flex-col gap-0">
-          <div className="font-bold text-tertiary">Maybe ({maybe.length})</div>
-          {maybe.map((rsvp) => (
-            <div key={rsvp.phone_number}>{rsvp.name}</div>
-          ))}
-        </div>
-      )}
-      {notGoing.length > 0 && (
-        <div className="flex flex-col gap-0">
-          <div className="font-bold text-tertiary">
-            Can&apos;t Go ({notGoing.length})
-          </div>
-          {notGoing.map((rsvp) => (
-            <div key={rsvp.phone_number}>{rsvp.name}</div>
-          ))}
-        </div>
-      )}
+      <AttendeeStatusList rsvps={going} title="Going" />
+      <AttendeeStatusList rsvps={maybe} title="Maybe" />
+      <AttendeeStatusList rsvps={notGoing} title="Can't Go" />
     </Popover>
+  );
+}
+
+function AttendeeStatusList(props: {
+  rsvps: Array<{
+    name: string;
+    phone_number?: string;
+    plus_ones: number;
+    status: string;
+  }>;
+  title: string;
+}) {
+  if (props.rsvps.length === 0) return null;
+  return (
+    <div className="flex flex-col gap-0.5">
+      <div className="font-bold text-tertiary">
+        {props.title} ({props.rsvps.length})
+      </div>
+      {props.rsvps.map((rsvp) => (
+        <div key={rsvp.phone_number}>
+          {rsvp.name} {rsvp.plus_ones > 0 ? `+${rsvp.plus_ones}` : ""}
+        </div>
+      ))}
+    </div>
   );
 }
 

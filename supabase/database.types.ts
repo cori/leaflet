@@ -34,6 +34,32 @@ export type Database = {
   }
   public: {
     Tables: {
+      custom_domains: {
+        Row: {
+          confirmed: boolean
+          domain: string
+          identity: string
+        }
+        Insert: {
+          confirmed: boolean
+          domain: string
+          identity?: string
+        }
+        Update: {
+          confirmed?: boolean
+          domain?: string
+          identity?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "custom_domains_identity_fkey"
+            columns: ["identity"]
+            isOneToOne: false
+            referencedRelation: "identities"
+            referencedColumns: ["email"]
+          },
+        ]
+      }
       email_auth_tokens: {
         Row: {
           confirmation_code: string
@@ -358,6 +384,7 @@ export type Database = {
           id: string
           name: string
           phone_number: string
+          plus_ones: number
           status: Database["public"]["Enums"]["rsvp_status"]
         }
         Insert: {
@@ -367,6 +394,7 @@ export type Database = {
           id?: string
           name?: string
           phone_number: string
+          plus_ones?: number
           status: Database["public"]["Enums"]["rsvp_status"]
         }
         Update: {
@@ -376,6 +404,7 @@ export type Database = {
           id?: string
           name?: string
           phone_number?: string
+          plus_ones?: number
           status?: Database["public"]["Enums"]["rsvp_status"]
         }
         Relationships: [

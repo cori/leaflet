@@ -1,5 +1,22 @@
 import { relations } from "drizzle-orm/relations";
-import { entities, facts, entity_sets, permission_tokens, identities, email_subscriptions_to_entity, email_auth_tokens, phone_rsvps_to_entity, permission_token_on_homepage, permission_token_rights } from "./schema";
+import { identities, custom_domains, entities, facts, entity_sets, permission_tokens, email_subscriptions_to_entity, email_auth_tokens, phone_rsvps_to_entity, permission_token_on_homepage, permission_token_rights } from "./schema";
+
+export const custom_domainsRelations = relations(custom_domains, ({one}) => ({
+	identity: one(identities, {
+		fields: [custom_domains.identity],
+		references: [identities.email]
+	}),
+}));
+
+export const identitiesRelations = relations(identities, ({one, many}) => ({
+	custom_domains: many(custom_domains),
+	permission_token: one(permission_tokens, {
+		fields: [identities.home_page],
+		references: [permission_tokens.id]
+	}),
+	email_auth_tokens: many(email_auth_tokens),
+	permission_token_on_homepages: many(permission_token_on_homepage),
+}));
 
 export const factsRelations = relations(facts, ({one}) => ({
 	entity: one(entities, {
@@ -33,15 +50,6 @@ export const permission_tokensRelations = relations(permission_tokens, ({one, ma
 	email_subscriptions_to_entities: many(email_subscriptions_to_entity),
 	permission_token_on_homepages: many(permission_token_on_homepage),
 	permission_token_rights: many(permission_token_rights),
-}));
-
-export const identitiesRelations = relations(identities, ({one, many}) => ({
-	permission_token: one(permission_tokens, {
-		fields: [identities.home_page],
-		references: [permission_tokens.id]
-	}),
-	email_auth_tokens: many(email_auth_tokens),
-	permission_token_on_homepages: many(permission_token_on_homepage),
 }));
 
 export const email_subscriptions_to_entityRelations = relations(email_subscriptions_to_entity, ({one}) => ({

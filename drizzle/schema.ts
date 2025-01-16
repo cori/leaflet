@@ -1,4 +1,4 @@
-import { pgTable, foreignKey, pgEnum, uuid, text, jsonb, timestamp, bigint, boolean, uniqueIndex, primaryKey } from "drizzle-orm/pg-core"
+import { pgTable, foreignKey, pgEnum, text, boolean, uuid, jsonb, timestamp, bigint, unique, uniqueIndex, smallint, primaryKey } from "drizzle-orm/pg-core"
   import { sql } from "drizzle-orm"
 
 export const aal_level = pgEnum("aal_level", ['aal1', 'aal2', 'aal3'])
@@ -13,6 +13,12 @@ export const rsvp_status = pgEnum("rsvp_status", ['GOING', 'NOT_GOING', 'MAYBE']
 export const action = pgEnum("action", ['INSERT', 'UPDATE', 'DELETE', 'TRUNCATE', 'ERROR'])
 export const equality_op = pgEnum("equality_op", ['eq', 'neq', 'lt', 'lte', 'gt', 'gte', 'in'])
 
+
+export const custom_domains = pgTable("custom_domains", {
+	domain: text("domain").primaryKey().notNull(),
+	identity: text("identity").default('').notNull().references(() => identities.email, { onDelete: "cascade", onUpdate: "cascade" } ),
+	confirmed: boolean("confirmed").notNull(),
+});
 
 export const facts = pgTable("facts", {
 	id: uuid("id").primaryKey().notNull(),
@@ -53,6 +59,11 @@ export const identities = pgTable("identities", {
 	created_at: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
 	home_page: uuid("home_page").notNull().references(() => permission_tokens.id, { onDelete: "cascade" } ),
 	email: text("email"),
+},
+(table) => {
+	return {
+		identities_email_key: unique("identities_email_key").on(table.email),
+	}
 });
 
 export const email_subscriptions_to_entity = pgTable("email_subscriptions_to_entity", {
@@ -91,6 +102,7 @@ export const phone_rsvps_to_entity = pgTable("phone_rsvps_to_entity", {
 	entity: uuid("entity").notNull().references(() => entities.id, { onDelete: "cascade", onUpdate: "cascade" } ),
 	name: text("name").default('').notNull(),
 	country_code: text("country_code").notNull(),
+	plus_ones: smallint("plus_ones").default(0).notNull(),
 },
 (table) => {
 	return {

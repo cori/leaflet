@@ -9,7 +9,7 @@ import { submitRSVP } from "actions/phone_rsvp_to_event";
 import { countryCodes } from "src/constants/countryCodes";
 import { Checkbox } from "components/Checkbox";
 import { ButtonPrimary, ButtonTertiary } from "components/Buttons";
-import { Separator } from "components/Layout";
+import { InputWithLabel, Separator } from "components/Layout";
 import { createPhoneAuthToken } from "actions/phone_auth/request_phone_auth_token";
 import { Input } from "components/Input";
 import { IPLocationContext } from "components/Providers/IPLocationProvider";
@@ -31,6 +31,7 @@ export function ContactDetailsForm(props: {
     { state: "details" } | { state: "confirm"; token: string }
   >({ state: "details" });
   let { name, setName } = useRSVPNameState();
+  let [plus_ones, setPlusOnes] = useState(0);
   let ipLocation = useContext(IPLocationContext) || "US";
   const [formState, setFormState] = useState({
     country_code:
@@ -47,6 +48,7 @@ export function ContactDetailsForm(props: {
         status,
         name: name,
         entity: entityID,
+        plus_ones,
       });
     } catch (e) {
       //handle failed confirm
@@ -60,12 +62,14 @@ export function ContactDetailsForm(props: {
         {
           name: name,
           status,
+          plus_ones,
           entity: entityID,
           phone_number: token.phone_number,
           country_code: token.country_code,
         },
       ],
     });
+    props.setState({ state: "default" });
     return true;
   };
   return contactFormState.state === "details" ? (
@@ -97,7 +101,7 @@ export function ContactDetailsForm(props: {
         <label
           htmlFor="rsvp-name-input"
           className={`
-            rsvpNameInput input-with-border basis-1/3 h-fit
+            rsvpNameInput input-with-border h-fit
             flex flex-col ${focusWithinStyles}`}
         >
           <div className="text-xs font-bold italic text-tertiary">name</div>
@@ -182,6 +186,21 @@ export function ContactDetailsForm(props: {
             Currently, all communication will be routed through{" "}
             <strong>WhatsApp</strong>. SMS coming soon!
           </div>
+        </div>
+        <div className="flex flex-row gap-2 w-full sm:w-32 h-fit">
+          <InputWithLabel
+            className="!appearance-auto"
+            label="Plus ones?"
+            type="number"
+            min={0}
+            max={4}
+            value={plus_ones}
+            onChange={(e) => setPlusOnes(parseInt(e.currentTarget.value))}
+            onKeyDown={(e) => {
+              if (e.key === "Backspace" && !e.currentTarget.value)
+                e.preventDefault();
+            }}
+          />
         </div>
       </div>
 
