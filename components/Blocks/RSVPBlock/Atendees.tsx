@@ -25,9 +25,10 @@ export function Attendees(props: { entityID: string; className?: string }) {
           </button>
         ) : (
           <ButtonTertiary className={`text-sm font-normal ${props.className}`}>
-            {going.length > 0 && `${going.length} Going`}
+            {going.length > 0 &&
+              `${going.reduce((acc, g) => acc + 1 + g.plus_ones, 0)} Going`}
             {maybe.length > 0 &&
-              `${going.length > 0 ? ", " : ""}${maybe.length} Maybe`}
+              `${going.length > 0 ? ", " : ""}${maybe.reduce((acc, m) => acc + 1 + m.plus_ones, 0)} Maybe`}
           </ButtonTertiary>
         )
       }
