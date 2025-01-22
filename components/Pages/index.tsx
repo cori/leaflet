@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useUIState } from "src/useUIState";
 import { useEntitySetContext } from "../EntitySetProvider";
 import { useSearchParams } from "next/navigation";
@@ -23,7 +23,6 @@ import { ShareOptions } from "../ShareOptions";
 import { ThemePopover } from "../ThemeManager/ThemeSetter";
 import { HomeButton } from "../HomeButton";
 import { Canvas } from "../Canvas";
-import { DraftPostOptions } from "../Blocks/MailboxBlock";
 import { Blocks } from "components/Blocks";
 import { MenuItem, Menu } from "../Layout";
 import { MoreOptionsTiny, CloseTiny, PaintSmall, ShareSmall } from "../Icons";
@@ -34,7 +33,6 @@ import { CardThemeProvider } from "../ThemeManager/ThemeProvider";
 import { PageShareMenu } from "./PageShareMenu";
 import { Watermark } from "components/Watermark";
 import { scrollIntoViewIfNeeded } from "src/utils/scrollIntoViewIfNeeded";
-import { LoginButton } from "components/LoginButton";
 
 export function Pages(props: { rootPage: string }) {
   let rootPage = useEntity(props.rootPage, "root/page")[0];
@@ -109,7 +107,11 @@ export const LeafletOptions = (props: { entityID: string }) => {
   );
 };
 
-function Page(props: { entityID: string; first?: boolean }) {
+export function Page(props: {
+  entityID: string;
+  first?: boolean;
+  contained?: boolean;
+}) {
   let { rep } = useReplicache();
   let isDraft = useReferenceToEntity("mailbox/draft", props.entityID);
 
@@ -133,7 +135,7 @@ function Page(props: { entityID: string; first?: boolean }) {
           }}
         />
       )}
-      <div className="pageWrapper w-fit flex relative snap-center">
+      <div className="pageWrapper h-full w-full flex relative snap-center">
         <div
           onClick={(e) => {
             if (e.defaultPrevented) return;
@@ -144,12 +146,13 @@ function Page(props: { entityID: string; first?: boolean }) {
           }}
           id={elementId.page(props.entityID).container}
           style={{
-            width: pageType === "doc" ? "var(--page-width-units)" : undefined,
             backgroundColor: "rgba(var(--bg-page), var(--bg-page-alpha))",
           }}
           className={`
-            ${pageType === "canvas" ? "!lg:max-w-[1152px]" : "max-w-[var(--page-width-units)]"}
-              page
+            page
+
+            ${pageType === "canvas" ? "!lg:max-w-[1152px]" : "max-w-[var(--page-width-units)]  overflow-x-hidden"}
+              w-full
               grow flex flex-col
               overscroll-y-none
               overflow-y-scroll no-scrollbar
@@ -157,35 +160,30 @@ function Page(props: { entityID: string; first?: boolean }) {
               ${isFocused ? "shadow-md border-border" : "border-border-light"}
             `}
         >
+          {/* this spacer maintains the page width even if the contents of the page are smaller than the page width. We need this because the var page width is based to the screen, but in the mailing list modal, the page width is based on the modal width.  */}
+          {pageType === "doc" ? (
+            <div className="spacer w-[1152px] h-0" />
+          ) : null}
           <Media mobile={true}>
-            <PageOptionsMenu entityID={props.entityID} first={props.first} />
+            {!props.contained && (
+              <PageOptionsMenu entityID={props.entityID} first={props.first} />
+            )}
           </Media>
           <DesktopPageFooter pageID={props.entityID} />
-          {isDraft.length > 0 && (
-            <div
-              className={`pageStatus pt-[6px] pb-1 ${!props.first ? "pr-10 pl-3 sm:px-4" : "px-3 sm:px-4"} border-b border-border text-tertiary`}
-              style={{
-                backgroundColor:
-                  "color-mix(in oklab, rgb(var(--accent-contrast)), rgb(var(--bg-page)) 85%)",
-              }}
-            >
-              <DraftPostOptions mailboxEntity={isDraft[0].entity} />
-            </div>
-          )}
 
           <PageContent entityID={props.entityID} />
         </div>
         <Media mobile={false}>
-          {isFocused && (
+          {isFocused && !props.contained ? (
             <PageOptionsMenu entityID={props.entityID} first={props.first} />
-          )}
+          ) : null}
         </Media>
       </div>
     </>
   );
 }
 
-const PageContent = (props: { entityID: string }) => {
+export const PageContent = (props: { entityID: string }) => {
   let pageType = useEntity(props.entityID, "page/type")?.data.value || "doc";
   if (pageType === "doc") return <DocContent entityID={props.entityID} />;
   return <Canvas entityID={props.entityID} />;

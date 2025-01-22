@@ -13,7 +13,7 @@ import { ImageBlock } from "./ImageBlock";
 import { PageLinkBlock } from "./PageLinkBlock";
 import { ExternalLinkBlock } from "./ExternalLinkBlock";
 import { EmbedBlock } from "./EmbedBlock";
-import { MailboxBlock } from "./MailboxBlock";
+import { MailboxBlock } from "./MailingListBlock";
 import { HeadingBlock } from "./HeadingBlock";
 import { CheckboxChecked, CheckboxEmpty, LockTiny } from "components/Icons";
 import { AreYouSure } from "./DeleteBlock";

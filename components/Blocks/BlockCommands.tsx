@@ -187,7 +187,7 @@ export const blockCommands: Command[] = [
     },
   },
   {
-    name: "Mailbox",
+    name: "Mailing List",
     icon: <BlockMailboxSmall />,
     type: "block",
     onSelect: async (rep, props) => {
